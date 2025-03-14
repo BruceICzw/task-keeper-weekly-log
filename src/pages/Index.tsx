@@ -4,8 +4,8 @@ import Header from "@/components/Header";
 import TaskInput from "@/components/TaskInput";
 import DailyTaskList from "@/components/DailyTaskList";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatDate, isTodayFriday, getCurrentWeek, getTasksForWeek } from "@/utils/dateUtils";
-import { createWeeklyLog, getWeeklyLog } from "@/utils/storageUtils";
+import { formatDate, isTodayFriday, getCurrentWeek } from "@/utils/dateUtils";
+import { createWeeklyLog, getWeeklyLog, getTasksForWeek } from "@/utils/storageUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
