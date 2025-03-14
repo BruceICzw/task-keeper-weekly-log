@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   formatDate, 
@@ -29,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface WeeklyLogProps {
   selectedDate?: Date;
@@ -48,15 +48,12 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
     const newWeekData = getWeekForDate(date);
     setWeekData(newWeekData);
     
-    // Get weekdays only (no weekends)
     const days = getWeekDaysOnly(newWeekData.startDate, newWeekData.endDate);
     setWeekDays(days);
     
-    // Get tasks for this week
     const weekTasks = getTasksForWeek(newWeekData);
     setTasks(weekTasks);
     
-    // Check if we already have a compiled log for this week
     const existingLog = getWeeklyLog(newWeekData);
     setCompiledLog(existingLog);
   }, [date]);
@@ -78,7 +75,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
         description: "Your tasks have been compiled into a weekly log.",
         duration: 4000,
       });
-    }, 800); // Artificial delay for UX
+    }, 800);
   };
 
   const groupTasksByDay = () => {
@@ -94,7 +91,20 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
     return groupedTasks;
   };
 
+  const getAllSkills = (tasksList: Task[]): string[] => {
+    const skillsSet = new Set<string>();
+    
+    tasksList.forEach(task => {
+      if (task.skills && task.skills.length > 0) {
+        task.skills.forEach(skill => skillsSet.add(skill));
+      }
+    });
+    
+    return Array.from(skillsSet);
+  };
+
   const tasksByDay = groupTasksByDay();
+  const allSkills = getAllSkills(tasks);
 
   return (
     <div className="w-full animate-fade-in">
@@ -155,6 +165,23 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
         </div>
       ) : (
         <div className="space-y-6">
+          {allSkills.length > 0 && (
+            <Card className="bg-muted/20 border border-muted">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium">Skills This Week</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {allSkills.map(skill => (
+                    <Badge key={skill} variant="secondary" className="px-3 py-1">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
           {compiledLog && (
             <Card className="bg-accent border border-accent animate-scale-in">
               <CardHeader className="pb-2">
@@ -198,7 +225,16 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                               <ul className="space-y-2">
                                 {dayTasks.map(task => (
                                   <li key={task.id} className="text-sm pb-2 border-b border-border last:border-0 last:pb-0">
-                                    {task.content}
+                                    <div>{task.content}</div>
+                                    {task.skills && task.skills.length > 0 && (
+                                      <div className="mt-1 flex flex-wrap gap-1">
+                                        {task.skills.map(skill => (
+                                          <Badge key={skill} variant="outline" className="text-xs">
+                                            {skill}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    )}
                                   </li>
                                 ))}
                               </ul>
@@ -237,7 +273,16 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                       <ul className="space-y-2 text-sm">
                         {dayTasks.map((task) => (
                           <li key={task.id} className="task-item">
-                            {task.content}
+                            <div>{task.content}</div>
+                            {task.skills && task.skills.length > 0 && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {task.skills.map(skill => (
+                                  <Badge key={skill} variant="secondary" className="text-xs">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
                           </li>
                         ))}
                       </ul>

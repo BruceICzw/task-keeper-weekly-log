@@ -1,12 +1,15 @@
 
 import { useState, useEffect } from "react";
 import { formatDate, isWeekday } from "@/utils/dateUtils";
-import { getTasksForDay, Task, deleteTask } from "@/utils/storageUtils";
+import { getTasksForDay, Task, deleteTask, addSkillsToTask, removeSkillFromTask } from "@/utils/storageUtils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangleIcon, TrashIcon } from "lucide-react";
+import { AlertTriangleIcon, TrashIcon, PlusCircleIcon, XIcon, WandSparklesIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 interface DailyTaskListProps {
   date: Date;
@@ -16,6 +19,8 @@ interface DailyTaskListProps {
 const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [skillInput, setSkillInput] = useState<string>("");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,6 +42,33 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
     toast({
       title: "Task deleted",
       description: "The task has been removed.",
+      duration: 3000,
+    });
+  };
+
+  const handleAddSkill = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedTaskId || !skillInput.trim()) return;
+    
+    addSkillsToTask(selectedTaskId, [skillInput.trim()]);
+    setSkillInput("");
+    loadTasks();
+    
+    toast({
+      title: "Skill added",
+      description: `"${skillInput.trim()}" has been added to the task.`,
+      duration: 3000,
+    });
+  };
+
+  const handleRemoveSkill = (taskId: string, skill: string) => {
+    removeSkillFromTask(taskId, skill);
+    loadTasks();
+    
+    toast({
+      title: "Skill removed",
+      description: `"${skill}" has been removed from the task.`,
       duration: 3000,
     });
   };
@@ -79,21 +111,98 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
           {tasks.map((task) => (
             <Card key={task.id} className="overflow-hidden task-item">
               <CardContent className="p-0">
-                <div className="flex items-start justify-between p-4">
-                  <div className="flex-1">
-                    <p>{task.content}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatDate(new Date(task.createdAt), "h:mm a")}
-                    </p>
+                <div className="flex flex-col p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p>{task.content}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatDate(new Date(task.createdAt), "h:mm a")}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-primary"
+                            onClick={() => setSelectedTaskId(task.id)}
+                          >
+                            <WandSparklesIcon className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Add Skills</DialogTitle>
+                            <DialogDescription>
+                              Add skills you applied or learned while performing this task.
+                            </DialogDescription>
+                          </DialogHeader>
+                          
+                          <form onSubmit={handleAddSkill} className="flex items-center space-x-2 mt-4">
+                            <Input
+                              placeholder="Enter a skill (e.g., React, Time Management)"
+                              value={skillInput}
+                              onChange={(e) => setSkillInput(e.target.value)}
+                              className="flex-1"
+                            />
+                            <Button type="submit" disabled={!skillInput.trim()}>
+                              Add
+                            </Button>
+                          </form>
+                          
+                          <div className="mt-4">
+                            <h4 className="text-sm font-medium mb-2">Task Skills:</h4>
+                            {task.skills && task.skills.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {task.skills.map((skill) => (
+                                  <Badge key={skill} variant="outline" className="flex items-center gap-1 px-3 py-1">
+                                    {skill}
+                                    <button 
+                                      type="button"
+                                      onClick={() => handleRemoveSkill(task.id, skill)}
+                                      className="text-muted-foreground hover:text-destructive ml-1"
+                                    >
+                                      <XIcon className="h-3 w-3" />
+                                    </button>
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">No skills added yet.</p>
+                            )}
+                          </div>
+                          
+                          <DialogClose asChild>
+                            <Button type="button" variant="outline" className="mt-4">
+                              Close
+                            </Button>
+                          </DialogClose>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteTask(task.id)}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDeleteTask(task.id)}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
+                  
+                  {task.skills && task.skills.length > 0 && (
+                    <div className="mt-2">
+                      <div className="flex flex-wrap gap-1">
+                        {task.skills.map((skill) => (
+                          <Badge key={skill} variant="secondary" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

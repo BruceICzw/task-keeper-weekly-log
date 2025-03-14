@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { getAllWeeklyLogs, WeeklyLog, deleteWeeklyLog } from "@/utils/storageUtils";
+import { getAllWeeklyLogs, WeeklyLog, deleteWeeklyLog, Task } from "@/utils/storageUtils";
 import { formatWeekRange, formatDate } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { 
@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { BookIcon, TrashIcon, FileTextIcon, Calendar, PlusCircleIcon } from "lucide-react";
+import { BookIcon, TrashIcon, FileTextIcon, WandSparklesIcon, GraduationCapIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Table,
@@ -35,6 +35,7 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface TasksBySKill {
   [day: string]: string[];
@@ -69,6 +70,19 @@ const LogBook = () => {
       description: "The weekly log has been removed from your logbook.",
       duration: 3000,
     });
+  };
+
+  // Function to get all unique skills from tasks in a log
+  const getLogSkills = (tasks: Task[]): string[] => {
+    const skillsSet = new Set<string>();
+    
+    tasks.forEach(task => {
+      if (task.skills && task.skills.length > 0) {
+        task.skills.forEach(skill => skillsSet.add(skill));
+      }
+    });
+    
+    return Array.from(skillsSet);
   };
 
   return (
@@ -126,32 +140,24 @@ const LogBook = () => {
                     )}
                   </TableCell>
                   <TableCell className="border border-border">
-                    <div className="flex justify-center items-center h-full">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                            <PlusCircleIcon className="h-4 w-4 mr-2" />
-                            Add Skills
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Add Skills for Week {log.weekNumber}</DialogTitle>
-                            <DialogDescription>
-                              Add the skills you applied or learned during this week.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="py-4">
-                            <p className="text-sm text-muted-foreground">
-                              This feature will be implemented in a future update.
-                            </p>
-                          </div>
-                          <DialogClose asChild>
-                            <Button variant="outline">Close</Button>
-                          </DialogClose>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
+                    {(() => {
+                      const skills = getLogSkills(log.tasks);
+                      
+                      return skills.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {skills.map(skill => (
+                            <Badge key={skill} variant="secondary" className="text-xs flex items-center gap-1">
+                              <GraduationCapIcon className="h-3 w-3" />
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex justify-center items-center h-full">
+                          <span className="text-muted-foreground italic text-sm">No skills recorded</span>
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="border border-border text-center">
                     <div className="flex justify-center space-x-2">
@@ -186,7 +192,16 @@ const LogBook = () => {
                                   <ul className="space-y-2">
                                     {dayTasks.map(task => (
                                       <li key={task.id} className="text-sm pb-2 border-b border-border last:border-0 last:pb-0">
-                                        {task.content}
+                                        <div>{task.content}</div>
+                                        {task.skills && task.skills.length > 0 && (
+                                          <div className="mt-1 flex flex-wrap gap-1">
+                                            {task.skills.map(skill => (
+                                              <Badge key={skill} variant="outline" className="text-xs">
+                                                {skill}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        )}
                                       </li>
                                     ))}
                                   </ul>

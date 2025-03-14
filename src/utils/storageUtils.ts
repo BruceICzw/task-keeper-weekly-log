@@ -6,6 +6,7 @@ export interface Task {
   content: string;
   date: string; // ISO string
   createdAt: string; // ISO string
+  skills: string[]; // Array of skills for the task
 }
 
 export interface WeeklyLog {
@@ -57,7 +58,8 @@ export const addTask = (content: string, date: Date): Task => {
     id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     content,
     date: date.toISOString(),
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    skills: [] // Initialize with empty skills array
   };
 
   const tasks = getAllTasks();
@@ -72,6 +74,32 @@ export const deleteTask = (taskId: string): void => {
   const tasks = getAllTasks();
   const updatedTasks = tasks.filter(task => task.id !== taskId);
   localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(updatedTasks));
+};
+
+// Add skills to a task
+export const addSkillsToTask = (taskId: string, skills: string[]): Task | null => {
+  const tasks = getAllTasks();
+  const taskIndex = tasks.findIndex(task => task.id === taskId);
+  
+  if (taskIndex === -1) return null;
+  
+  tasks[taskIndex].skills = Array.from(new Set([...tasks[taskIndex].skills, ...skills]));
+  localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+  
+  return tasks[taskIndex];
+};
+
+// Remove a skill from a task
+export const removeSkillFromTask = (taskId: string, skill: string): Task | null => {
+  const tasks = getAllTasks();
+  const taskIndex = tasks.findIndex(task => task.id === taskId);
+  
+  if (taskIndex === -1) return null;
+  
+  tasks[taskIndex].skills = tasks[taskIndex].skills.filter(s => s !== skill);
+  localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+  
+  return tasks[taskIndex];
 };
 
 // Get all weekly logs
