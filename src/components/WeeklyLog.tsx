@@ -1,0 +1,256 @@
+
+import { useState, useEffect } from "react";
+import { 
+  formatDate, 
+  getWeekForDate, 
+  getWeekDaysOnly, 
+  formatWeekRange, 
+  getWeekIdentifier,
+  WeekData
+} from "@/utils/dateUtils";
+import { 
+  getTasksForWeek, 
+  createWeeklyLog, 
+  getWeeklyLog, 
+  Task, 
+  WeeklyLog as WeeklyLogType 
+} from "@/utils/storageUtils";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon, RefreshCwIcon } from "lucide-react";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { useToast } from "@/hooks/use-toast";
+
+interface WeeklyLogProps {
+  selectedDate?: Date;
+  onCompile?: (log: WeeklyLogType) => void;
+}
+
+const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => {
+  const [weekData, setWeekData] = useState<WeekData>(getWeekForDate(selectedDate));
+  const [weekDays, setWeekDays] = useState<Date[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [compiledLog, setCompiledLog] = useState<WeeklyLogType | null>(null);
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [date, setDate] = useState<Date>(selectedDate);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const newWeekData = getWeekForDate(date);
+    setWeekData(newWeekData);
+    
+    // Get weekdays only (no weekends)
+    const days = getWeekDaysOnly(newWeekData.startDate, newWeekData.endDate);
+    setWeekDays(days);
+    
+    // Get tasks for this week
+    const weekTasks = getTasksForWeek(newWeekData);
+    setTasks(weekTasks);
+    
+    // Check if we already have a compiled log for this week
+    const existingLog = getWeeklyLog(newWeekData);
+    setCompiledLog(existingLog);
+  }, [date]);
+
+  const compileWeeklyLog = () => {
+    setIsCompiling(true);
+    
+    setTimeout(() => {
+      const log = createWeeklyLog(weekData, tasks);
+      setCompiledLog(log);
+      setIsCompiling(false);
+      
+      if (onCompile) {
+        onCompile(log);
+      }
+      
+      toast({
+        title: "Weekly log compiled",
+        description: "Your tasks have been compiled into a weekly log.",
+        duration: 4000,
+      });
+    }, 800); // Artificial delay for UX
+  };
+
+  const groupTasksByDay = () => {
+    const groupedTasks: Record<string, Task[]> = {};
+    
+    weekDays.forEach(day => {
+      const dayStr = formatDate(day, "yyyy-MM-dd");
+      groupedTasks[dayStr] = tasks.filter(task => 
+        task.date.startsWith(dayStr)
+      );
+    });
+    
+    return groupedTasks;
+  };
+
+  const tasksByDay = groupTasksByDay();
+
+  return (
+    <div className="w-full animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-light mb-1">Weekly Summary</h2>
+          <div className="text-sm text-muted-foreground flex items-center">
+            <span>Week {weekData.weekNumber}, {weekData.year}</span>
+            <span className="mx-2">•</span>
+            <span>{formatWeekRange(weekData.startDate, weekData.endDate)}</span>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="transition-all duration-300">
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                <span>Change Week</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(newDate) => newDate && setDate(newDate)}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+          
+          <Button 
+            onClick={compileWeeklyLog} 
+            disabled={isCompiling || tasks.length === 0}
+            className="transition-all duration-300 hover:scale-105"
+          >
+            {isCompiling ? (
+              <>
+                <RefreshCwIcon className="h-4 w-4 mr-2 animate-spin" />
+                Compiling...
+              </>
+            ) : (
+              <>
+                <RefreshCwIcon className="h-4 w-4 mr-2" />
+                Compile Now
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+      
+      {tasks.length === 0 ? (
+        <div className="text-center py-12 bg-muted/30 rounded-lg">
+          <h3 className="text-xl font-light mb-2">No Tasks This Week</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            There are no tasks for this week yet. Add some tasks to your daily log to see them here.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {compiledLog && (
+            <Card className="bg-accent border border-accent animate-scale-in">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full mr-2">Compiled</span>
+                  Weekly Log Compiled
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  This week's tasks have been compiled into your logbook on{" "}
+                  {formatDate(new Date(compiledLog.compiledAt), "MMMM d, yyyy 'at' h:mm a")}.
+                </p>
+                <div className="mt-4">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">View Compiled Log</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Weekly Log</DialogTitle>
+                        <DialogDescription>
+                          Week {compiledLog.weekNumber}, {compiledLog.year} • {formatWeekRange(new Date(compiledLog.startDate), new Date(compiledLog.endDate))}
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="mt-4 space-y-4">
+                        {compiledLog.tasks.length > 0 ? (
+                          Object.entries(
+                            compiledLog.tasks.reduce<Record<string, Task[]>>((acc, task) => {
+                              const dayStr = task.date.split('T')[0];
+                              if (!acc[dayStr]) acc[dayStr] = [];
+                              acc[dayStr].push(task);
+                              return acc;
+                            }, {})
+                          ).map(([dayStr, dayTasks]) => (
+                            <div key={dayStr} className="bg-muted/40 p-4 rounded-lg">
+                              <h4 className="font-medium mb-2">
+                                {formatDate(new Date(dayStr), "EEEE, MMMM d")}
+                              </h4>
+                              <ul className="space-y-2">
+                                {dayTasks.map(task => (
+                                  <li key={task.id} className="text-sm pb-2 border-b border-border last:border-0 last:pb-0">
+                                    {task.content}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-6">
+                            <p className="text-muted-foreground">No tasks found in this log.</p>
+                          </div>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            {weekDays.map((day) => {
+              const dayStr = formatDate(day, "yyyy-MM-dd");
+              const dayTasks = tasksByDay[dayStr] || [];
+              
+              return (
+                <Card key={dayStr} className={`overflow-hidden transition-all duration-300 hover:shadow-md ${dayTasks.length === 0 ? 'opacity-70' : ''}`}>
+                  <CardHeader className="pb-2 pt-3 px-4">
+                    <CardTitle className="text-sm font-medium">
+                      {formatDate(day, "EEEE")}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">{formatDate(day, "MMMM d")}</p>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4 pt-0">
+                    {dayTasks.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic">No tasks</p>
+                    ) : (
+                      <ul className="space-y-2 text-sm">
+                        {dayTasks.map((task) => (
+                          <li key={task.id} className="task-item">
+                            {task.content}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default WeeklyLog;
