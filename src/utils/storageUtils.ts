@@ -2,6 +2,7 @@
 import { getDayIdentifier, getWeekIdentifier, WeekData } from './dateUtils';
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
+import { Json } from '@/integrations/supabase/types';
 
 export interface Task {
   id: string;
@@ -23,6 +24,44 @@ export interface WeeklyLog {
   user_id?: string; // For Supabase
 }
 
+// Convert Supabase task to our Task interface
+const mapSupabaseTask = (task: any): Task => ({
+  id: task.id,
+  content: task.content,
+  date: task.date,
+  createdAt: task.created_at,
+  skills: task.skills || [],
+  user_id: task.user_id
+});
+
+// Convert our Task to Supabase format
+const mapTaskToSupabase = (task: Task) => ({
+  id: task.id,
+  content: task.content,
+  date: task.date,
+  skills: task.skills,
+  user_id: task.user_id,
+  description: task.content // Required field in Supabase schema
+});
+
+// Serialize tasks for Supabase (convert Task[] to JSON-compatible format)
+const serializeTasks = (tasks: Task[]): Json => {
+  return JSON.parse(JSON.stringify(tasks)) as Json;
+};
+
+// Deserialize tasks from Supabase (convert JSON to Task[])
+const deserializeTasks = (jsonTasks: Json | null): Task[] => {
+  if (!jsonTasks) return [];
+  const tasks = Array.isArray(jsonTasks) ? jsonTasks : [];
+  return tasks.map(task => ({
+    id: String(task.id || ''),
+    content: String(task.content || ''),
+    date: String(task.date || ''),
+    createdAt: String(task.createdAt || task.created_at || new Date().toISOString()),
+    skills: Array.isArray(task.skills) ? task.skills.map(String) : []
+  }));
+};
+
 // Get all tasks
 export const getAllTasks = async (): Promise<Task[]> => {
   const { data: session } = await supabase.auth.getSession();
@@ -42,13 +81,7 @@ export const getAllTasks = async (): Promise<Task[]> => {
     return [];
   }
   
-  return data.map(task => ({
-    id: task.id,
-    content: task.content,
-    date: task.date,
-    createdAt: task.created_at,
-    skills: task.skills || []
-  }));
+  return data.map(mapSupabaseTask);
 };
 
 // Get tasks for a specific day
@@ -102,7 +135,8 @@ export const addTask = async (content: string, date: Date): Promise<Task> => {
       content: newTask.content,
       date: newTask.date,
       skills: newTask.skills,
-      user_id: session.session.user.id
+      user_id: session.session.user.id,
+      description: newTask.content // Required field in Supabase schema
     })
     .select()
     .single();
@@ -112,13 +146,7 @@ export const addTask = async (content: string, date: Date): Promise<Task> => {
     throw error;
   }
   
-  return {
-    id: data.id,
-    content: data.content,
-    date: data.date,
-    createdAt: data.created_at,
-    skills: data.skills || []
-  };
+  return mapSupabaseTask(data);
 };
 
 // Delete a task
@@ -190,13 +218,7 @@ export const addSkillsToTask = async (taskId: string, skills: string[]): Promise
     return null;
   }
   
-  return {
-    id: data.id,
-    content: data.content,
-    date: data.date,
-    createdAt: data.created_at,
-    skills: data.skills || []
-  };
+  return mapSupabaseTask(data);
 };
 
 // Remove a skill from a task
@@ -244,13 +266,7 @@ export const removeSkillFromTask = async (taskId: string, skill: string): Promis
     return null;
   }
   
-  return {
-    id: data.id,
-    content: data.content,
-    date: data.date,
-    createdAt: data.created_at,
-    skills: data.skills || []
-  };
+  return mapSupabaseTask(data);
 };
 
 // Get all weekly logs
@@ -278,7 +294,7 @@ export const getAllWeeklyLogs = async (): Promise<WeeklyLog[]> => {
     year: log.year,
     startDate: log.start_date,
     endDate: log.end_date,
-    tasks: log.tasks || [],
+    tasks: deserializeTasks(log.tasks),
     compiledAt: log.compiled_at
   }));
 };
@@ -325,6 +341,9 @@ export const createWeeklyLog = async (weekData: WeekData, tasks: Task[]): Promis
     return newLog;
   }
   
+  // Convert tasks to a format compatible with Supabase JSONB
+  const serializedTasks = serializeTasks(tasks);
+  
   // Check if log already exists in Supabase
   const { data: existingLog } = await supabase
     .from('weekly_logs')
@@ -341,8 +360,10 @@ export const createWeeklyLog = async (weekData: WeekData, tasks: Task[]): Promis
         year: newLog.year,
         start_date: newLog.startDate,
         end_date: newLog.endDate,
-        tasks: newLog.tasks,
-        compiled_at: newLog.compiledAt
+        tasks: serializedTasks,
+        compiled_at: newLog.compiledAt,
+        summary: `Weekly log for week ${newLog.weekNumber}, ${newLog.year}`,
+        week_ending: new Date(newLog.endDate).toISOString().split('T')[0]
       })
       .eq('id', weekId)
       .select()
@@ -359,7 +380,7 @@ export const createWeeklyLog = async (weekData: WeekData, tasks: Task[]): Promis
       year: data.year,
       startDate: data.start_date,
       endDate: data.end_date,
-      tasks: data.tasks,
+      tasks: deserializeTasks(data.tasks),
       compiledAt: data.compiled_at
     };
   } else {
@@ -372,9 +393,11 @@ export const createWeeklyLog = async (weekData: WeekData, tasks: Task[]): Promis
         year: newLog.year,
         start_date: newLog.startDate,
         end_date: newLog.endDate,
-        tasks: newLog.tasks,
+        tasks: serializedTasks,
         compiled_at: newLog.compiledAt,
-        user_id: session.session.user.id
+        user_id: session.session.user.id,
+        summary: `Weekly log for week ${newLog.weekNumber}, ${newLog.year}`,
+        week_ending: new Date(newLog.endDate).toISOString().split('T')[0]
       })
       .select()
       .single();
@@ -390,7 +413,7 @@ export const createWeeklyLog = async (weekData: WeekData, tasks: Task[]): Promis
       year: data.year,
       startDate: data.start_date,
       endDate: data.end_date,
-      tasks: data.tasks,
+      tasks: deserializeTasks(data.tasks),
       compiledAt: data.compiled_at
     };
   }

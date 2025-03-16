@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { getAllWeeklyLogs, WeeklyLog, deleteWeeklyLog, Task, saveCoverPageData } from "@/utils/storageUtils";
 import { formatWeekRange, formatDate } from "@/utils/dateUtils";
@@ -49,26 +48,45 @@ const LogBook = () => {
     loadLogs();
   }, []);
 
-  const loadLogs = () => {
+  const loadLogs = async () => {
     setLoading(true);
-    const allLogs = getAllWeeklyLogs();
-    // Sort logs by date, most recent first
-    const sortedLogs = allLogs.sort((a, b) => {
-      return new Date(b.compiledAt).getTime() - new Date(a.compiledAt).getTime();
-    });
-    setLogs(sortedLogs);
-    setLoading(false);
+    try {
+      const allLogs = await getAllWeeklyLogs();
+      // Sort logs by date, most recent first
+      const sortedLogs = [...allLogs].sort((a, b) => {
+        return new Date(b.compiledAt).getTime() - new Date(a.compiledAt).getTime();
+      });
+      setLogs(sortedLogs);
+    } catch (error) {
+      console.error("Error loading logs:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load weekly logs",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteLog = (logId: string) => {
-    deleteWeeklyLog(logId);
-    loadLogs();
-    
-    toast({
-      title: "Log deleted",
-      description: "The weekly log has been removed from your logbook.",
-      duration: 3000,
-    });
+  const handleDeleteLog = async (logId: string) => {
+    try {
+      await deleteWeeklyLog(logId);
+      await loadLogs();
+      
+      toast({
+        title: "Log deleted",
+        description: "The weekly log has been removed from your logbook.",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Error deleting log:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete the log",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleExportClick = () => {
@@ -132,7 +150,6 @@ const LogBook = () => {
     }
   };
 
-  // Function to get all unique skills from tasks in a log
   const getLogSkills = (tasks: Task[]): string[] => {
     const skillsSet = new Set<string>();
     
@@ -328,7 +345,6 @@ const LogBook = () => {
         </div>
       )}
 
-      {/* Export Dialog */}
       <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

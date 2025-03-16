@@ -17,24 +17,28 @@ const Index = () => {
 
   // Check if today is Friday and we need to compile the weekly log
   useEffect(() => {
-    if (isTodayFriday()) {
-      const weekData = getCurrentWeek();
-      const existingLog = getWeeklyLog(weekData);
-      
-      if (!existingLog) {
-        const tasks = getTasksForWeek(weekData);
+    const checkForFridayCompilation = async () => {
+      if (isTodayFriday()) {
+        const weekData = getCurrentWeek();
+        const existingLog = await getWeeklyLog(weekData);
         
-        if (tasks.length > 0) {
-          createWeeklyLog(weekData, tasks);
+        if (!existingLog) {
+          const weekTasks = await getTasksForWeek(weekData);
           
-          toast({
-            title: "Weekly Log Created",
-            description: "Today is Friday! Your weekly tasks have been compiled into the logbook.",
-            duration: 5000,
-          });
+          if (weekTasks.length > 0) {
+            await createWeeklyLog(weekData, weekTasks);
+            
+            toast({
+              title: "Weekly Log Created",
+              description: "Today is Friday! Your weekly tasks have been compiled into the logbook.",
+              duration: 5000,
+            });
+          }
         }
       }
-    }
+    };
+    
+    checkForFridayCompilation();
   }, []);
 
   const handleTaskAdded = () => {
