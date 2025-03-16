@@ -70,7 +70,7 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Task Keeper</CardTitle>
+          <CardTitle className="text-2xl font-bold">Uni Log Book Creator</CardTitle>
           <CardDescription>Enter your email to sign in to your account</CardDescription>
         </CardHeader>
         

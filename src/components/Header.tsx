@@ -59,7 +59,7 @@ const Header = () => {
           </SheetContent>
         </Sheet>
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-lg font-bold">Task Keeper</span>
+          <span className="text-lg font-bold">Uni Log Book Creator</span>
         </Link>
       </div>
       <nav className="hidden md:flex md:items-center md:gap-6">
