@@ -1,65 +1,89 @@
 
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, BookIcon, ListIcon } from "lucide-react";
-import { formatDate } from "@/utils/dateUtils";
+import { Menu, X, BookOpen, Calendar, Home, LogOut } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 
 const Header = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const today = new Date();
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState(false);
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    setOpen(false);
+  };
+
+  const links = [
+    { name: "Home", path: "/", icon: <Home className="size-5" /> },
+    { name: "Weekly View", path: "/weekly", icon: <Calendar className="size-5" /> },
+    { name: "Log Book", path: "/logbook", icon: <BookOpen className="size-5" /> },
+  ];
 
   return (
-    <header className="w-full px-6 py-4 glass shadow-sm mb-8 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <h1 
-              className="text-2xl font-light tracking-tight cursor-pointer transition-all duration-300 hover:text-primary"
-              onClick={() => navigate("/")}
-            >
-              Task Keeper
-            </h1>
-            <div className="hidden md:flex items-center space-x-1 text-muted-foreground">
-              <span className="text-xs px-2 py-1 bg-secondary rounded-full">
-                {formatDate(today, "EEEE, MMMM d")}
-              </span>
-            </div>
-          </div>
-          
-          <nav className="flex items-center space-x-1">
-            <Button
-              variant={location.pathname === "/" ? "default" : "ghost"}
-              size="sm"
-              className="text-sm transition-all duration-300"
-              onClick={() => navigate("/")}
-            >
-              <ListIcon className="h-4 w-4 mr-1" />
-              Tasks
+    <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b bg-background px-4 md:px-6">
+      <div className="flex items-center gap-2">
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="md:hidden">
+              <Menu className="size-5" />
+              <span className="sr-only">Toggle Menu</span>
             </Button>
-            
-            <Button
-              variant={location.pathname === "/weekly" ? "default" : "ghost"}
-              size="sm"
-              className="text-sm transition-all duration-300"
-              onClick={() => navigate("/weekly")}
-            >
-              <CalendarIcon className="h-4 w-4 mr-1" />
-              Weekly
-            </Button>
-            
-            <Button
-              variant={location.pathname === "/logbook" ? "default" : "ghost"}
-              size="sm"
-              className="text-sm transition-all duration-300"
-              onClick={() => navigate("/logbook")}
-            >
-              <BookIcon className="h-4 w-4 mr-1" />
-              Logbook
-            </Button>
-          </nav>
-        </div>
+          </SheetTrigger>
+          <SheetContent side="left" className="flex flex-col">
+            <nav className="flex flex-col gap-4">
+              {links.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`flex items-center gap-2 text-lg font-medium transition-colors hover:text-primary ${
+                    pathname === link.path ? "text-primary" : "text-muted-foreground"
+                  }`}
+                  onClick={() => setOpen(false)}
+                >
+                  {link.icon}
+                  {link.name}
+                </Link>
+              ))}
+              <Button
+                variant="ghost"
+                className="flex items-center justify-start gap-2 px-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"
+                onClick={handleSignOut}
+              >
+                <LogOut className="size-5" />
+                Sign Out
+              </Button>
+            </nav>
+          </SheetContent>
+        </Sheet>
+        <Link to="/" className="flex items-center gap-2">
+          <span className="text-lg font-bold">Task Keeper</span>
+        </Link>
       </div>
+      <nav className="hidden md:flex md:items-center md:gap-6">
+        {links.map((link) => (
+          <Link
+            key={link.path}
+            to={link.path}
+            className={`flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary ${
+              pathname === link.path ? "text-primary" : "text-muted-foreground"
+            }`}
+          >
+            {link.icon}
+            {link.name}
+          </Link>
+        ))}
+        <Button
+          variant="ghost"
+          className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+          onClick={handleSignOut}
+        >
+          <LogOut className="size-4" />
+          Sign Out
+        </Button>
+      </nav>
     </header>
   );
 };
