@@ -22,6 +22,7 @@ export interface WeeklyLog {
 // Local storage keys
 const TASKS_STORAGE_KEY = 'task-keeper-tasks';
 const WEEKLY_LOGS_STORAGE_KEY = 'task-keeper-weekly-logs';
+const COVER_PAGE_DATA_KEY = 'task-keeper-cover-page';
 
 // Get all tasks
 export const getAllTasks = (): Task[] => {
@@ -154,8 +155,20 @@ export const deleteWeeklyLog = (logId: string): void => {
   localStorage.setItem(WEEKLY_LOGS_STORAGE_KEY, JSON.stringify(updatedLogs));
 };
 
+// Save cover page data
+export const saveCoverPageData = (coverData: any): void => {
+  localStorage.setItem(COVER_PAGE_DATA_KEY, JSON.stringify(coverData));
+};
+
+// Get cover page data
+export const getCoverPageData = (): any => {
+  const dataJson = localStorage.getItem(COVER_PAGE_DATA_KEY);
+  return dataJson ? JSON.parse(dataJson) : null;
+};
+
 // Clear all data (for testing/reset purposes)
 export const clearAllData = (): void => {
   localStorage.removeItem(TASKS_STORAGE_KEY);
   localStorage.removeItem(WEEKLY_LOGS_STORAGE_KEY);
+  localStorage.removeItem(COVER_PAGE_DATA_KEY);
 };

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { getAllWeeklyLogs, WeeklyLog, deleteWeeklyLog, Task } from "@/utils/storageUtils";
+import { getAllWeeklyLogs, WeeklyLog, deleteWeeklyLog, Task, saveCoverPageData } from "@/utils/storageUtils";
 import { formatWeekRange, formatDate } from "@/utils/dateUtils";
 import { Button } from "@/components/ui/button";
 import { 
@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { BookIcon, TrashIcon, FileTextIcon, WandSparklesIcon, GraduationCapIcon } from "lucide-react";
+import { BookIcon, TrashIcon, FileTextIcon, DownloadIcon, GraduationCapIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Table,
@@ -36,14 +36,13 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-interface TasksBySKill {
-  [day: string]: string[];
-}
+import CoverPageForm from "./CoverPageForm";
+import { generateLogbookPDF } from "@/utils/pdfGenerator";
 
 const LogBook = () => {
   const [logs, setLogs] = useState<WeeklyLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,6 +71,67 @@ const LogBook = () => {
     });
   };
 
+  const handleExportClick = () => {
+    if (logs.length === 0) {
+      toast({
+        title: "No logs to export",
+        description: "Add some tasks and weekly logs before exporting.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+    setShowExportDialog(true);
+  };
+
+  const handleExportSubmit = async (coverData: any) => {
+    try {
+      setShowExportDialog(false);
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we prepare your logbook...",
+        duration: 3000,
+      });
+
+      // Save cover data for future use
+      saveCoverPageData(coverData);
+      
+      // Sort logs chronologically for the PDF
+      const chronologicalLogs = [...logs].sort((a, b) => {
+        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+      });
+
+      // Generate PDF
+      const pdfBlob = await generateLogbookPDF(chronologicalLogs, coverData);
+      
+      // Create a download link
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Internship_Logbook_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Export successful",
+        description: "Your logbook has been downloaded.",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast({
+        title: "Export failed",
+        description: "There was an error generating your logbook PDF.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  };
+
   // Function to get all unique skills from tasks in a log
   const getLogSkills = (tasks: Task[]): string[] => {
     const skillsSet = new Set<string>();
@@ -87,9 +147,20 @@ const LogBook = () => {
 
   return (
     <div className="w-full animate-fade-in">
-      <div className="flex items-center space-x-3 mb-6">
-        <BookIcon className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-light">Weekly Logbook</h2>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <BookIcon className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-light">Weekly Logbook</h2>
+        </div>
+        
+        <Button 
+          variant="outline" 
+          className="flex items-center space-x-2"
+          onClick={handleExportClick}
+        >
+          <DownloadIcon className="h-4 w-4" />
+          <span>Export Logbook</span>
+        </Button>
       </div>
       
       {loading ? (
@@ -256,6 +327,25 @@ const LogBook = () => {
           </Table>
         </div>
       )}
+
+      {/* Export Dialog */}
+      <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Export Internship Logbook</DialogTitle>
+            <DialogDescription>
+              Enter details for your logbook cover page. This information will appear on the first page of your exported PDF.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4">
+            <CoverPageForm 
+              onSubmit={handleExportSubmit}
+              onCancel={() => setShowExportDialog(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
