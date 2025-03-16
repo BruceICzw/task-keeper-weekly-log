@@ -11,46 +11,73 @@ export type Database = {
     Tables: {
       tasks: {
         Row: {
+          content: string
           created_at: string | null
+          date: string
           description: string
           id: string
+          skills: string[] | null
           user_id: string
         }
         Insert: {
+          content?: string
           created_at?: string | null
+          date?: string
           description: string
           id?: string
+          skills?: string[] | null
           user_id: string
         }
         Update: {
+          content?: string
           created_at?: string | null
+          date?: string
           description?: string
           id?: string
+          skills?: string[] | null
           user_id?: string
         }
         Relationships: []
       }
       weekly_logs: {
         Row: {
+          compiled_at: string
           created_at: string | null
+          end_date: string
           id: string
+          start_date: string
           summary: string
+          tasks: Json | null
           user_id: string
           week_ending: string
+          week_number: number
+          year: number
         }
         Insert: {
+          compiled_at?: string
           created_at?: string | null
+          end_date?: string
           id?: string
+          start_date?: string
           summary: string
+          tasks?: Json | null
           user_id: string
           week_ending: string
+          week_number?: number
+          year?: number
         }
         Update: {
+          compiled_at?: string
           created_at?: string | null
+          end_date?: string
           id?: string
+          start_date?: string
           summary?: string
+          tasks?: Json | null
           user_id?: string
           week_ending?: string
+          week_number?: number
+          year?: number
         }
         Relationships: []
       }

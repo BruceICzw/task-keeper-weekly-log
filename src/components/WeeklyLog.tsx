@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   formatDate, 
@@ -41,30 +42,48 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [compiledLog, setCompiledLog] = useState<WeeklyLogType | null>(null);
   const [isCompiling, setIsCompiling] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState<Date>(selectedDate);
   const { toast } = useToast();
 
   useEffect(() => {
-    const newWeekData = getWeekForDate(date);
-    setWeekData(newWeekData);
-    
-    const days = getWeekDaysOnly(newWeekData.startDate, newWeekData.endDate);
-    setWeekDays(days);
-    
-    const weekTasks = getTasksForWeek(newWeekData);
-    setTasks(weekTasks);
-    
-    const existingLog = getWeeklyLog(newWeekData);
-    setCompiledLog(existingLog);
+    loadWeekData();
   }, [date]);
 
-  const compileWeeklyLog = () => {
-    setIsCompiling(true);
+  const loadWeekData = async () => {
+    setIsLoading(true);
+    try {
+      const newWeekData = getWeekForDate(date);
+      setWeekData(newWeekData);
+      
+      const days = getWeekDaysOnly(newWeekData.startDate, newWeekData.endDate);
+      setWeekDays(days);
+      
+      const weekTasks = await getTasksForWeek(newWeekData);
+      setTasks(weekTasks);
+      
+      const existingLog = await getWeeklyLog(newWeekData);
+      setCompiledLog(existingLog);
+    } catch (error) {
+      console.error('Error loading week data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load weekly data. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const compileWeeklyLog = async () => {
+    if (isCompiling) return;
     
-    setTimeout(() => {
-      const log = createWeeklyLog(weekData, tasks);
+    setIsCompiling(true);
+    try {
+      const log = await createWeeklyLog(weekData, tasks);
       setCompiledLog(log);
-      setIsCompiling(false);
       
       if (onCompile) {
         onCompile(log);
@@ -75,7 +94,17 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
         description: "Your tasks have been compiled into a weekly log.",
         duration: 4000,
       });
-    }, 800);
+    } catch (error) {
+      console.error('Error compiling weekly log:', error);
+      toast({
+        title: "Error",
+        description: "Failed to compile weekly log. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsCompiling(false);
+    }
   };
 
   const groupTasksByDay = () => {
@@ -138,7 +167,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
           
           <Button 
             onClick={compileWeeklyLog} 
-            disabled={isCompiling || tasks.length === 0}
+            disabled={isCompiling || tasks.length === 0 || isLoading}
             className="transition-all duration-300 hover:scale-105"
           >
             {isCompiling ? (
@@ -156,7 +185,12 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
         </div>
       </div>
       
-      {tasks.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-12 bg-muted/30 rounded-lg">
+          <RefreshCwIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+          <p className="text-muted-foreground">Loading week data...</p>
+        </div>
+      ) : tasks.length === 0 ? (
         <div className="text-center py-12 bg-muted/30 rounded-lg">
           <h3 className="text-xl font-light mb-2">No Tasks This Week</h3>
           <p className="text-muted-foreground max-w-md mx-auto">

@@ -5,7 +5,7 @@ import { getTasksForDay, Task, deleteTask, addSkillsToTask, removeSkillFromTask 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangleIcon, TrashIcon, PlusCircleIcon, XIcon, WandSparklesIcon } from "lucide-react";
+import { AlertTriangleIcon, TrashIcon, PlusCircleIcon, XIcon, WandSparklesIcon, RefreshCwIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -21,56 +21,111 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [skillInput, setSkillInput] = useState<string>("");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadTasks();
   }, [date]);
 
-  const loadTasks = () => {
+  const loadTasks = async () => {
     setLoading(true);
-    const dayTasks = getTasksForDay(date);
-    setTasks(dayTasks);
-    setLoading(false);
+    try {
+      const dayTasks = await getTasksForDay(date);
+      setTasks(dayTasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load tasks. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    deleteTask(taskId);
-    loadTasks();
-    if (onChange) onChange();
+  const handleDeleteTask = async (taskId: string) => {
+    if (isProcessing) return;
     
-    toast({
-      title: "Task deleted",
-      description: "The task has been removed.",
-      duration: 3000,
-    });
+    setIsProcessing(true);
+    try {
+      await deleteTask(taskId);
+      await loadTasks();
+      if (onChange) onChange();
+      
+      toast({
+        title: "Task deleted",
+        description: "The task has been removed.",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleAddSkill = (e: React.FormEvent) => {
+  const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedTaskId || !skillInput.trim()) return;
+    if (!selectedTaskId || !skillInput.trim() || isProcessing) return;
     
-    addSkillsToTask(selectedTaskId, [skillInput.trim()]);
-    setSkillInput("");
-    loadTasks();
-    
-    toast({
-      title: "Skill added",
-      description: `"${skillInput.trim()}" has been added to the task.`,
-      duration: 3000,
-    });
+    setIsProcessing(true);
+    try {
+      await addSkillsToTask(selectedTaskId, [skillInput.trim()]);
+      setSkillInput("");
+      await loadTasks();
+      
+      toast({
+        title: "Skill added",
+        description: `"${skillInput.trim()}" has been added to the task.`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error adding skill:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add skill. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const handleRemoveSkill = (taskId: string, skill: string) => {
-    removeSkillFromTask(taskId, skill);
-    loadTasks();
+  const handleRemoveSkill = async (taskId: string, skill: string) => {
+    if (isProcessing) return;
     
-    toast({
-      title: "Skill removed",
-      description: `"${skill}" has been removed from the task.`,
-      duration: 3000,
-    });
+    setIsProcessing(true);
+    try {
+      await removeSkillFromTask(taskId, skill);
+      await loadTasks();
+      
+      toast({
+        title: "Skill removed",
+        description: `"${skill}" has been removed from the task.`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Error removing skill:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove skill. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (!isWeekday(date)) {
@@ -91,8 +146,20 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
         <h3 className="text-lg font-medium">
           {formatDate(date, "EEEE, MMMM d")}
         </h3>
-        <div className="text-sm text-muted-foreground">
-          {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={loadTasks} 
+            disabled={loading || isProcessing}
+            className="flex items-center space-x-1"
+          >
+            <RefreshCwIcon className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+            <span className="text-xs">Refresh</span>
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
+          </div>
         </div>
       </div>
       
@@ -127,6 +194,7 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
                             size="icon"
                             className="text-muted-foreground hover:text-primary"
                             onClick={() => setSelectedTaskId(task.id)}
+                            disabled={isProcessing}
                           >
                             <WandSparklesIcon className="h-4 w-4" />
                           </Button>
@@ -145,9 +213,10 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
                               value={skillInput}
                               onChange={(e) => setSkillInput(e.target.value)}
                               className="flex-1"
+                              disabled={isProcessing}
                             />
-                            <Button type="submit" disabled={!skillInput.trim()}>
-                              Add
+                            <Button type="submit" disabled={!skillInput.trim() || isProcessing}>
+                              {isProcessing ? "Adding..." : "Add"}
                             </Button>
                           </form>
                           
@@ -162,6 +231,7 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
                                       type="button"
                                       onClick={() => handleRemoveSkill(task.id, skill)}
                                       className="text-muted-foreground hover:text-destructive ml-1"
+                                      disabled={isProcessing}
                                     >
                                       <XIcon className="h-3 w-3" />
                                     </button>
@@ -186,8 +256,16 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
                         size="icon"
                         className="text-muted-foreground hover:text-destructive"
                         onClick={() => handleDeleteTask(task.id)}
+                        disabled={isProcessing}
                       >
-                        <TrashIcon className="h-4 w-4" />
+                        {isProcessing ? (
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <TrashIcon className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
