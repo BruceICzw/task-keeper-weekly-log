@@ -226,7 +226,8 @@ const addLogPage = (doc: jsPDF, log: WeeklyLog, margin: number, pageWidth: numbe
   });
   
   // Add footer
-  const pageCount = doc.internal.getNumberOfPages();
+  // Fix: Use the correct API to get page count
+  const pageCount = doc.getCurrentPageInfo().pageNumber;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.text(
@@ -236,3 +237,4 @@ const addLogPage = (doc: jsPDF, log: WeeklyLog, margin: number, pageWidth: numbe
     { align: 'right' }
   );
 };
+
