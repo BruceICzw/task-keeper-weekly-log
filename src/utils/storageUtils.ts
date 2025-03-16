@@ -1,4 +1,3 @@
-
 import { getDayIdentifier, getWeekIdentifier, WeekData } from './dateUtils';
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
@@ -56,26 +55,30 @@ const deserializeTasks = (jsonTasks: Json | null): Task[] => {
   // Ensure jsonTasks is an array
   if (!Array.isArray(jsonTasks)) return [];
   
-  return jsonTasks.map(task => {
-    // Safely access properties with type checking
-    if (typeof task === 'object' && task !== null) {
+  return jsonTasks.map(item => {
+    // Type guard: Check if item is an object first
+    if (typeof item !== 'object' || item === null) {
+      // Return a default task if the item isn't a valid object
       return {
-        id: typeof task.id === 'string' ? task.id : String(task.id || ''),
-        content: typeof task.content === 'string' ? task.content : String(task.content || ''),
-        date: typeof task.date === 'string' ? task.date : String(task.date || ''),
-        createdAt: typeof task.createdAt === 'string' ? task.createdAt : 
-                  typeof task.created_at === 'string' ? task.created_at : 
-                  new Date().toISOString(),
-        skills: Array.isArray(task.skills) ? task.skills.map(String) : []
+        id: uuidv4(),
+        content: '',
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        skills: []
       };
     }
-    // Return a default task if the item isn't an object
+    
+    // Safely access properties with proper type assertions
+    const taskObj = item as Record<string, unknown>;
+    
     return {
-      id: uuidv4(),
-      content: '',
-      date: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      skills: []
+      id: typeof taskObj.id === 'string' ? taskObj.id : String(taskObj.id || uuidv4()),
+      content: typeof taskObj.content === 'string' ? taskObj.content : String(taskObj.content || ''),
+      date: typeof taskObj.date === 'string' ? taskObj.date : String(taskObj.date || new Date().toISOString()),
+      createdAt: typeof taskObj.createdAt === 'string' ? taskObj.createdAt : 
+                typeof taskObj.created_at === 'string' ? taskObj.created_at : 
+                new Date().toISOString(),
+      skills: Array.isArray(taskObj.skills) ? taskObj.skills.map(String) : []
     };
   });
 };
