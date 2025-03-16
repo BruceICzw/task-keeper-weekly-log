@@ -14,32 +14,45 @@ const Index = () => {
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [loading, setLoading] = useState(true);
 
   // Check if today is Friday and we need to compile the weekly log
   useEffect(() => {
     const checkForFridayCompilation = async () => {
-      if (isTodayFriday()) {
-        const weekData = getCurrentWeek();
-        const existingLog = await getWeeklyLog(weekData);
-        
-        if (!existingLog) {
-          const weekTasks = await getTasksForWeek(weekData);
+      try {
+        if (isTodayFriday()) {
+          const weekData = getCurrentWeek();
+          const existingLog = await getWeeklyLog(weekData);
           
-          if (weekTasks.length > 0) {
-            await createWeeklyLog(weekData, weekTasks);
+          if (!existingLog) {
+            const weekTasks = await getTasksForWeek(weekData);
             
-            toast({
-              title: "Weekly Log Created",
-              description: "Today is Friday! Your weekly tasks have been compiled into the logbook.",
-              duration: 5000,
-            });
+            if (weekTasks.length > 0) {
+              await createWeeklyLog(weekData, weekTasks);
+              
+              toast({
+                title: "Weekly Log Created",
+                description: "Today is Friday! Your weekly tasks have been compiled into the logbook.",
+                duration: 5000,
+              });
+            }
           }
         }
+      } catch (error) {
+        console.error("Error in Friday compilation:", error);
+        toast({
+          title: "Error",
+          description: "There was a problem compiling your weekly log.",
+          variant: "destructive",
+          duration: 5000,
+        });
+      } finally {
+        setLoading(false);
       }
     };
     
     checkForFridayCompilation();
-  }, []);
+  }, [toast]);
 
   const handleTaskAdded = () => {
     setRefreshKey(prev => prev + 1);

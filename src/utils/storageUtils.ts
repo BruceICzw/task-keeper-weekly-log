@@ -52,14 +52,32 @@ const serializeTasks = (tasks: Task[]): Json => {
 // Deserialize tasks from Supabase (convert JSON to Task[])
 const deserializeTasks = (jsonTasks: Json | null): Task[] => {
   if (!jsonTasks) return [];
-  const tasks = Array.isArray(jsonTasks) ? jsonTasks : [];
-  return tasks.map(task => ({
-    id: String(task.id || ''),
-    content: String(task.content || ''),
-    date: String(task.date || ''),
-    createdAt: String(task.createdAt || task.created_at || new Date().toISOString()),
-    skills: Array.isArray(task.skills) ? task.skills.map(String) : []
-  }));
+  
+  // Ensure jsonTasks is an array
+  if (!Array.isArray(jsonTasks)) return [];
+  
+  return jsonTasks.map(task => {
+    // Safely access properties with type checking
+    if (typeof task === 'object' && task !== null) {
+      return {
+        id: typeof task.id === 'string' ? task.id : String(task.id || ''),
+        content: typeof task.content === 'string' ? task.content : String(task.content || ''),
+        date: typeof task.date === 'string' ? task.date : String(task.date || ''),
+        createdAt: typeof task.createdAt === 'string' ? task.createdAt : 
+                  typeof task.created_at === 'string' ? task.created_at : 
+                  new Date().toISOString(),
+        skills: Array.isArray(task.skills) ? task.skills.map(String) : []
+      };
+    }
+    // Return a default task if the item isn't an object
+    return {
+      id: uuidv4(),
+      content: '',
+      date: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      skills: []
+    };
+  });
 };
 
 // Get all tasks
