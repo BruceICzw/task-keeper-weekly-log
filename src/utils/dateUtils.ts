@@ -1,5 +1,5 @@
-
 import { format, startOfWeek, endOfWeek, isWeekend, isFriday, eachDayOfInterval, isAfter, isBefore, startOfDay, endOfDay, isSameDay } from "date-fns";
+import { v4 as uuidv4 } from 'uuid';
 
 export type WeekData = {
   startDate: Date;
@@ -74,6 +74,12 @@ export const isTodayFriday = (): boolean => {
 };
 
 export const getWeekIdentifier = (weekData: WeekData): string => {
+  const weekKey = `week-${weekData.year}-${weekData.weekNumber}`;
+  
+  return uuidv4();
+};
+
+export const getWeekStringIdentifier = (weekData: WeekData): string => {
   return `week-${weekData.year}-${weekData.weekNumber}`;
 };
 
