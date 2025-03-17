@@ -42,8 +42,18 @@ const Auth = () => {
       return;
     }
     
+    if (!username.trim()) {
+      toast({
+        title: "Username required",
+        description: "Please enter a username",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+    
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -59,6 +69,15 @@ const Auth = () => {
         title: "Success!",
         description: "Registration successful. Check your email for confirmation.",
       });
+      
+      // If signUp succeeded but user needs to confirm their email, we'll stay on the auth page
+      if (data.user && !data.user.email_confirmed_at) {
+        setLoading(false);
+        return;
+      }
+      
+      // If auto-confirmation is enabled, redirect to homepage
+      navigate("/");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -75,35 +94,37 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      // First, try to sign in with email
-      let { data, error } = await supabase.auth.signInWithPassword({
-        email: loginIdentifier.includes('@') ? loginIdentifier : '',
+      // First, determine if the identifier is an email or username
+      const isEmail = loginIdentifier.includes('@');
+      
+      // If it's an email, try to log in directly
+      if (isEmail) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: loginIdentifier,
+          password,
+        });
+        
+        if (error) throw error;
+        navigate("/");
+        return;
+      }
+      
+      // If it's a username, first find the user's email in the profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('username', loginIdentifier)
+        .single();
+      
+      if (profileError) {
+        throw new Error("Username not found");
+      }
+      
+      // Now sign in with the email we found
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: profileData.email,
         password,
       });
-      
-      // If the login failed and the identifier doesn't look like an email (no @ symbol)
-      if (error && !loginIdentifier.includes('@')) {
-        // Try to sign in with username by looking up the email associated with the username
-        const { data: usersData, error: usersError } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('username', loginIdentifier)
-          .single();
-          
-        if (usersError) throw usersError;
-        
-        if (usersData?.email) {
-          // Now try to login with the email we found
-          const secondAttempt = await supabase.auth.signInWithPassword({
-            email: usersData.email,
-            password,
-          });
-          
-          if (secondAttempt.error) throw secondAttempt.error;
-          data = secondAttempt.data;
-          error = null;
-        }
-      }
       
       if (error) throw error;
       
