@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Task, WeeklyLog } from "@/utils/storageUtils";
@@ -276,14 +275,10 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
           const y = data.cell.y;
           const height = data.cell.height;
           
-          // Get the total width of all columns
-          const totalWidth = data.table.width;
-          
-          // Draw a rectangle over the full row to create a visual colspan effect
-          // We skip this step because the cell background is already set via styles.fillColor
+          // Calculate the total width of all columns
+          const totalWidth = data.table.columns.reduce((sum, column) => sum + column.width, 0);
           
           // Remove the vertical borders between the cells in this row
-          // We do this by drawing over them with the same color as the cell background
           doc.setDrawColor(240, 240, 240); // Same as the cell background
           doc.setLineWidth(0.1);
           
