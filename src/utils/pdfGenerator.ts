@@ -1,3 +1,4 @@
+
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Task, WeeklyLog } from "@/utils/storageUtils";
@@ -186,7 +187,8 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
     // Process each day's tasks
     Object.entries(tasksByDay).forEach(([dayStr, dayTasks]) => {
       const dayDate = new Date(dayStr);
-      const dateStr = formatDate(dayDate, 'EEEE, MMMM d, yyyy');
+      // Simplified date format (only the date, not the day name)
+      const dateStr = formatDate(dayDate, "MMMM d, yyyy");
       
       // Add each task for this day
       dayTasks.forEach((task, taskIndex) => {
@@ -312,3 +314,4 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
     );
   }
 };
+
