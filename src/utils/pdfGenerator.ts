@@ -1,3 +1,4 @@
+
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Task, WeeklyLog } from "@/utils/storageUtils";
@@ -241,11 +242,10 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
         data.cell.styles.fontStyle = 'bold';
         data.cell.styles.fillColor = [240, 240, 240];
         
-        // Apply colspan to the week header
+        // Apply manual handling for the week header instead of using skipColumnSpan
         if (data.column.index === 0) {
-          data.cell.colSpan = 3;
-        } else {
-          data.cell.skipColumnSpan = true; // Skip these cells due to colspan
+          data.cell.styles.halign = 'center';
+          // We'll draw empty cells for columns 1 and 2, but style them to look like one cell
         }
       }
       
@@ -257,6 +257,48 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
           data.row.raw[2] === '') {
         
         data.cell.styles.minCellHeight = 5; // Make the empty row smaller
+      }
+    },
+    didDrawCell: function(data) {
+      // Handle week header by manually drawing over the cell borders to create a visual colspan effect
+      if (data.row.index >= 0 && 
+          data.row.raw && 
+          Array.isArray(data.row.raw) && 
+          data.row.raw[0] && 
+          typeof data.row.raw[0] === 'string' && 
+          data.row.raw[0].startsWith('Week ')) {
+        
+        // For the week header row, if we're in the first column
+        if (data.column.index === 0) {
+          // After the cell is drawn, we get its position and dimensions
+          const cellWidth = data.column.width;
+          const x = data.cell.x;
+          const y = data.cell.y;
+          const height = data.cell.height;
+          
+          // Get the total width of all columns
+          const totalWidth = data.table.width;
+          
+          // Draw a rectangle over the full row to create a visual colspan effect
+          // We skip this step because the cell background is already set via styles.fillColor
+          
+          // Remove the vertical borders between the cells in this row
+          // We do this by drawing over them with the same color as the cell background
+          doc.setDrawColor(240, 240, 240); // Same as the cell background
+          doc.setLineWidth(0.1);
+          
+          // Draw over the vertical border on the right of the first cell
+          const x1 = x + cellWidth;
+          doc.line(x1, y, x1, y + height);
+          
+          // Draw the week header text centered across all columns
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(0, 0, 0);
+          doc.text(data.row.raw[0], x + totalWidth / 2, y + height / 2, {
+            align: 'center',
+            baseline: 'middle'
+          });
+        }
       }
     }
   });
