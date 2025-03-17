@@ -1,3 +1,4 @@
+
 import { format, startOfWeek, endOfWeek, isWeekend, isFriday, eachDayOfInterval, isAfter, isBefore, startOfDay, endOfDay, isSameDay } from "date-fns";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,9 +22,9 @@ export const formatWeekRange = (startDate: Date, endDate: Date): string => {
   const endMonth = format(endDate, "MMM");
   
   if (startMonth === endMonth) {
-    return `${startMonth} ${format(startDate, "dd")}-${format(endDate, "dd")}, ${format(endDate, "yyyy")}`;
+    return `${startMonth} ${format(startDate, "d")}-${format(endDate, "d")}, ${format(endDate, "yyyy")}`;
   } else {
-    return `${format(startDate, "MMM dd")} - ${format(endDate, "MMM dd")}, ${format(endDate, "yyyy")}`;
+    return `${format(startDate, "MMM d")} - ${format(endDate, "MMM d")}, ${format(endDate, "yyyy")}`;
   }
 };
 

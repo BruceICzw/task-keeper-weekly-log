@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Task, WeeklyLog } from "@/utils/storageUtils";
@@ -163,14 +162,11 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
   logs.forEach((log) => {
     const weekStart = new Date(log.startDate);
     const weekEnd = new Date(log.endDate);
-    const weekHeader = `Week ${log.weekNumber}: ${formatWeekRange(weekStart, weekEnd)}`;
-    
-    // Add a week header row with colspan
-    tableData.push([weekHeader, '', '']);
+    const weekHeader = `Week ${log.weekNumber}: ${format(weekStart, "MMM d")}-${format(weekEnd, "d")}, ${format(weekEnd, "yyyy")}`;
     
     if (log.tasks.length === 0) {
       // If no tasks, add a single row indicating that
-      tableData.push(['No tasks recorded for this week', '', '']);
+      tableData.push([weekHeader, 'No tasks recorded for this week', '']);
       return;
     }
     
@@ -184,16 +180,16 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
       tasksByDay[dayStr].push(task);
     });
     
+    // Used to track if this is the first row for this week
+    let isFirstRowInWeek = true;
+    
     // Process each day's tasks
     Object.entries(tasksByDay).forEach(([dayStr, dayTasks]) => {
-      const dayDate = new Date(dayStr);
-      // Simplified date format (only the date, not the day name)
-      const dateStr = formatDate(dayDate, "MMMM d, yyyy");
-      
       // Add each task for this day
       dayTasks.forEach((task, taskIndex) => {
-        // Only show date on first task of the day
-        const dateCell = taskIndex === 0 ? dateStr : '';
+        // Only show week header on the first task of the week
+        const dateCell = isFirstRowInWeek ? weekHeader : '';
+        isFirstRowInWeek = false;
         
         // Combine skills into comma-separated string
         const skillsStr = task.skills && task.skills.length > 0
@@ -241,12 +237,11 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
           data.row.raw[0].startsWith('Week ')) {
         
         data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.fillColor = [240, 240, 240];
         
-        // Apply manual handling for the week header instead of using skipColumnSpan
-        if (data.column.index === 0) {
-          data.cell.styles.halign = 'center';
-          // We'll draw empty cells for columns 1 and 2, but style them to look like one cell
+        // Apply proper formatting to the Date cell (first column) when it contains a week header
+        if (data.column.index === 0 && data.cell.text && data.cell.text.length > 0) {
+          data.cell.styles.halign = 'left';
+          data.cell.styles.valign = 'middle';
         }
       }
       
@@ -261,41 +256,19 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
       }
     },
     didDrawCell: function(data) {
-      // Handle week header by manually drawing over the cell borders to create a visual colspan effect
-      if (data.row.index >= 0 && 
-          data.row.raw && 
-          Array.isArray(data.row.raw) && 
-          data.row.raw[0] && 
-          typeof data.row.raw[0] === 'string' && 
-          data.row.raw[0].startsWith('Week ')) {
+      // We need to import format from date-fns
+      const { format } = require('date-fns');
+      
+      // For cells that contain week headers, we want to style the text properly
+      if (data.column.index === 0 && 
+          data.cell.text && 
+          data.cell.text.length > 0 && 
+          data.cell.text[0].startsWith('Week ')) {
         
-        // For the week header row, if we're in the first column
-        if (data.column.index === 0) {
-          // After the cell is drawn, we get its position and dimensions
-          const cellWidth = data.column.width;
-          const x = data.cell.x;
-          const y = data.cell.y;
-          const height = data.cell.height;
-          
-          // Calculate the total width of all columns
-          const totalWidth = data.table.columns.reduce((sum, column) => sum + column.width, 0);
-          
-          // Remove the vertical borders between the cells in this row
-          doc.setDrawColor(240, 240, 240); // Same as the cell background
-          doc.setLineWidth(0.1);
-          
-          // Draw over the vertical border on the right of the first cell
-          const x1 = x + cellWidth;
-          doc.line(x1, y, x1, y + height);
-          
-          // Draw the week header text centered across all columns
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(0, 0, 0);
-          doc.text(data.row.raw[0], x + totalWidth / 2, y + height / 2, {
-            align: 'center',
-            baseline: 'middle'
-          });
-        }
+        // We don't need to manipulate borders here anymore since we're not trying to create a colspan effect
+        // Just make sure the text is properly formatted
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
       }
     }
   });
@@ -314,4 +287,3 @@ const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidt
     );
   }
 };
-
