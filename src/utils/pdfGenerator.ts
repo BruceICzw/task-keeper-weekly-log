@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Task, WeeklyLog } from "@/utils/storageUtils";
@@ -34,11 +33,9 @@ export const generateLogbookPDF = async (
   doc.addPage();
   addTableOfContents(doc, logs, margin);
   
-  // Add logs content page by page
-  logs.forEach((log, index) => {
-    doc.addPage();
-    addLogPage(doc, log, margin, pageWidth);
-  });
+  // Add all logs in one continuous table
+  doc.addPage();
+  addAllLogsTable(doc, logs, margin, pageWidth);
   
   // Save PDF as blob
   const pdfBlob = doc.output('blob');
@@ -152,59 +149,68 @@ const addTableOfContents = (doc: jsPDF, logs: WeeklyLog[], margin: number) => {
   });
 };
 
-const addLogPage = (doc: jsPDF, log: WeeklyLog, margin: number, pageWidth: number) => {
-  const weekStart = new Date(log.startDate);
-  const weekEnd = new Date(log.endDate);
-  
-  // Add week header
+const addAllLogsTable = (doc: jsPDF, logs: WeeklyLog[], margin: number, pageWidth: number) => {
+  // Add all logs header
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text(`Week ${log.weekNumber}: ${formatWeekRange(weekStart, weekEnd)}`, margin, margin);
+  doc.text('Internship Weekly Logs', margin, margin);
   
-  // Add table of tasks
-  const tableStartY = margin + 10;
-  
-  if (log.tasks.length === 0) {
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(12);
-    doc.text('No tasks recorded for this week', margin, tableStartY + 10);
-    return;
-  }
-  
-  // Group tasks by day
-  const tasksByDay: { [key: string]: Task[] } = {};
-  log.tasks.forEach(task => {
-    const dayStr = task.date.split('T')[0];
-    if (!tasksByDay[dayStr]) {
-      tasksByDay[dayStr] = [];
-    }
-    tasksByDay[dayStr].push(task);
-  });
-  
-  // Process table data
+  // Process all table data
   const tableData: Array<string[]> = [];
   
-  Object.entries(tasksByDay).forEach(([dayStr, dayTasks]) => {
-    const dayDate = new Date(dayStr);
-    const dateStr = formatDate(dayDate, 'EEEE, MMMM d, yyyy');
+  // For each log
+  logs.forEach((log) => {
+    const weekStart = new Date(log.startDate);
+    const weekEnd = new Date(log.endDate);
+    const weekHeader = `Week ${log.weekNumber}: ${formatWeekRange(weekStart, weekEnd)}`;
     
-    // Add each task for this day
-    dayTasks.forEach((task, taskIndex) => {
-      // Only show date on first task of the day
-      const dateCell = taskIndex === 0 ? dateStr : '';
-      
-      // Combine skills into comma-separated string
-      const skillsStr = task.skills && task.skills.length > 0
-        ? task.skills.join(', ')
-        : '';
-      
-      tableData.push([dateCell, task.content, skillsStr]);
+    // Add a week header row with colspan
+    tableData.push([weekHeader, '', '']);
+    
+    if (log.tasks.length === 0) {
+      // If no tasks, add a single row indicating that
+      tableData.push(['No tasks recorded for this week', '', '']);
+      return;
+    }
+    
+    // Group tasks by day
+    const tasksByDay: { [key: string]: Task[] } = {};
+    log.tasks.forEach(task => {
+      const dayStr = task.date.split('T')[0];
+      if (!tasksByDay[dayStr]) {
+        tasksByDay[dayStr] = [];
+      }
+      tasksByDay[dayStr].push(task);
     });
+    
+    // Process each day's tasks
+    Object.entries(tasksByDay).forEach(([dayStr, dayTasks]) => {
+      const dayDate = new Date(dayStr);
+      const dateStr = formatDate(dayDate, 'EEEE, MMMM d, yyyy');
+      
+      // Add each task for this day
+      dayTasks.forEach((task, taskIndex) => {
+        // Only show date on first task of the day
+        const dateCell = taskIndex === 0 ? dateStr : '';
+        
+        // Combine skills into comma-separated string
+        const skillsStr = task.skills && task.skills.length > 0
+          ? task.skills.join(', ')
+          : '';
+        
+        tableData.push([dateCell, task.content, skillsStr]);
+      });
+    });
+    
+    // Add a blank row between weeks for better readability (except for the last week)
+    if (logs.indexOf(log) < logs.length - 1) {
+      tableData.push(['', '', '']);
+    }
   });
   
-  // Define table headers and styling
+  // Define table options and styling
   autoTable(doc, {
-    startY: tableStartY,
+    startY: margin + 10,
     head: [['Date', 'Task Performed', 'Skills Applied / Learnt']],
     body: tableData,
     theme: 'grid',
@@ -223,18 +229,49 @@ const addLogPage = (doc: jsPDF, log: WeeklyLog, margin: number, pageWidth: numbe
       cellPadding: 3,
     },
     margin: { left: margin, right: margin },
+    didParseCell: function(data) {
+      // Style week header rows
+      if (data.row.index >= 0 && 
+          data.row.raw && 
+          Array.isArray(data.row.raw) && 
+          data.row.raw[0] && 
+          typeof data.row.raw[0] === 'string' && 
+          data.row.raw[0].startsWith('Week ')) {
+        
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.fillColor = [240, 240, 240];
+        
+        // Apply colspan to the week header
+        if (data.column.index === 0) {
+          data.cell.colSpan = 3;
+        } else {
+          data.cell.skipColumnSpan = true; // Skip these cells due to colspan
+        }
+      }
+      
+      // Style the empty rows between weeks
+      if (data.row.raw && 
+          Array.isArray(data.row.raw) && 
+          data.row.raw[0] === '' && 
+          data.row.raw[1] === '' && 
+          data.row.raw[2] === '') {
+        
+        data.cell.styles.minCellHeight = 5; // Make the empty row smaller
+      }
+    }
   });
   
-  // Add footer
-  // Fix: Use the correct API to get page count
-  const pageCount = doc.getCurrentPageInfo().pageNumber;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text(
-    `Page ${pageCount}`,
-    pageWidth - margin,
-    doc.internal.pageSize.height - margin,
-    { align: 'right' }
-  );
+  // Add footer with page numbers
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(
+      `Page ${i} of ${pageCount}`,
+      pageWidth - margin,
+      doc.internal.pageSize.height - margin,
+      { align: 'right' }
+    );
+  }
 };
-
