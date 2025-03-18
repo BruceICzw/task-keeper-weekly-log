@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, BookOpen, Calendar, Home, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
+import { ThemeToggle } from "./ThemeToggle";
 
 const Header = () => {
   const { pathname } = useLocation();
@@ -75,6 +76,7 @@ const Header = () => {
             {link.name}
           </Link>
         ))}
+        <ThemeToggle />
         <Button
           variant="ghost"
           className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
