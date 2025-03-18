@@ -1,22 +1,16 @@
-# Welcome to your Lovable project
+# Task Keeper Weekly Log
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/40c51b34-8c75-43a9-9181-546eefb30998
+This is a task-keeping application with a weekly log feature. It is designed for university students on attachment, prioritizing function and form with an elegant and minimalist design inspired by Apple.
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/40c51b34-8c75-43a9-9181-546eefb30998) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -24,10 +18,10 @@ Follow these steps:
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/BruceICzw/task-keeper-weekly-log.git
 
 # Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+cd task-keeper-weekly-log
 
 # Step 3: Install the necessary dependencies.
 npm i
@@ -52,7 +46,7 @@ npm run dev
 
 ## What technologies are used for this project?
 
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
@@ -62,8 +56,59 @@ This project is built with .
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/40c51b34-8c75-43a9-9181-546eefb30998) and click on Share -> Publish.
+To deploy this project, you can use platforms like Netlify or Vercel. Follow their documentation for deployment steps.
 
-## I want to use a custom domain - is that possible?
+## How the System Works
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+### Daily Task Logging
+
+1. **Add Tasks**: Students can add their daily tasks through the `DailyTaskList` component.
+2. **View Tasks**: The tasks for each day are displayed in a list format.
+3. **Edit/Delete Tasks**: Students can edit or delete tasks as needed.
+
+### Weekly Log Compilation
+
+1. **Compile Weekly Log**: At the end of each week, students can compile their daily tasks into a weekly log using the `WeeklyLog` component.
+2. **View Weekly Logs**: Compiled weekly logs are displayed in a list format, sorted by date.
+
+### Exporting the Log Book
+
+1. **Generate Cover Page**: When exporting the log book, students will be prompted to fill in their details, including:
+   - Full Name
+   - Student ID
+   - Institution Name and Logo
+   - Company Name and Logo
+2. **Export as PDF**: The system will generate a PDF document that includes the cover page and all compiled weekly logs.
+
+### Example Usage
+
+```tsx
+import { DailyTaskList } from './components/DailyTaskList';
+import { WeeklyLog } from './components/WeeklyLog';
+import { LogBook } from './components/LogBook';
+
+const App = () => {
+  return (
+    <div>
+      <DailyTaskList date={new Date()} />
+      <WeeklyLog selectedDate={new Date()} />
+      <LogBook />
+    </div>
+  );
+};
+
+export default App;
+```
+
+### Additional Features
+
+- **Toast Notifications**: The system uses toast notifications to inform users of actions such as task additions, deletions, and errors.
+- **Responsive Design**: The application is designed to be responsive and works well on both desktop and mobile devices.
+
+## Contributing
+
+If you would like to contribute to this project, please fork the repository and submit a pull request with your changes.
+
+## License
+
+This project is licensed under the MIT License.

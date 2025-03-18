@@ -1,6 +1,5 @@
-
-import { Button } from "@/components/ui/button"
-import { Mail } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 
 export function ContactDeveloper() {
   return (
@@ -28,10 +27,10 @@ export function ContactDeveloper() {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <p>You can contact the developer at:</p>
-          <p className="font-medium">developer@example.com</p>
+          <a href="mailto:chigwabruce@gmail.com" className="font-medium">chigwabruce@gmail.com</a>
           <p>Or visit the GitHub repository for issues and feature requests:</p>
-          <a 
-            href="https://github.com/developer/uni-log-book-creator" 
+          <a
+            href="https://github.com/BruceICzw/uni-log-book-creator"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary underline"
@@ -41,5 +40,5 @@ export function ContactDeveloper() {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
