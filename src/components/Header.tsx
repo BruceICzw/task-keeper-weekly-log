@@ -6,6 +6,7 @@ import { Menu, X, BookOpen, Calendar, Home, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { ThemeToggle } from "./ThemeToggle";
+import { ContactDeveloper } from "./ContactDeveloper";
 
 const Header = () => {
   const { pathname } = useLocation();
@@ -76,6 +77,7 @@ const Header = () => {
             {link.name}
           </Link>
         ))}
+        <ContactDeveloper />
         <ThemeToggle />
         <Button
           variant="ghost"

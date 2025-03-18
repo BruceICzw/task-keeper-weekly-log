@@ -13,9 +13,18 @@
     <meta property="og:image" content="/og-image.png" />
     <link rel="icon" type="image/png" href="/lovable-uploads/e84a5028-2cdf-4169-9b00-e293114c2e25.png" />
     <script>
-      let theme = localStorage.getItem('theme')
-      if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      document.documentElement.classList.toggle('dark', theme === 'dark')
+      // This script handles initial theme to avoid flash of wrong theme
+      (function() {
+        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const storedTheme = localStorage.getItem('theme');
+        const theme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+        
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
     </script>
   </head>
   <body>

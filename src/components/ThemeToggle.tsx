@@ -2,9 +2,18 @@
 import { useTheme } from "next-themes"
 import { Switch } from "@/components/ui/switch"
 import { Sun, Moon } from "lucide-react"
+import { useEffect, useState } from "react"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  
+  // Avoid hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  if (!mounted) return null
   
   return (
     <div className="flex items-center gap-2">
