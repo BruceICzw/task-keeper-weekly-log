@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import LogBookView from "./pages/LogBookView";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import Landing from "./pages/Landing";
 
 const queryClient = new QueryClient();
 
@@ -33,8 +33,8 @@ const AppRoutes = () => {
   
   return (
     <Routes>
+      <Route path="/" element={session ? <ProtectedRoute><Index /></ProtectedRoute> : <Landing />} />
       <Route path="/auth" element={session ? <Navigate to="/" replace /> : <Auth />} />
-      <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
       <Route path="/weekly" element={<ProtectedRoute><WeeklyLogView /></ProtectedRoute>} />
       <Route path="/logbook" element={<ProtectedRoute><LogBookView /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
