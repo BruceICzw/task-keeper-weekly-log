@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { formatDate, isWeekday } from "@/utils/dateUtils";
 import { getTasksForDay, Task, deleteTask, addSkillsToTask, removeSkillFromTask } from "@/utils/storageUtils";
@@ -9,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import TaskInput from "@/components/TaskInput";
 
 interface DailyTaskListProps {
   date: Date;
@@ -43,6 +45,11 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTaskAdded = () => {
+    loadTasks();
+    if (onChange) onChange();
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -143,6 +150,10 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
 
   return (
     <div className="w-full animate-fade-in">
+      <div className="mb-6">
+        <TaskInput date={date} onTaskAdded={handleTaskAdded} />
+      </div>
+      
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium">
           {formatDate(date, "EEEE, MMMM d")}
