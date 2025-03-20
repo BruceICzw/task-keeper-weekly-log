@@ -1,8 +1,42 @@
 # Task Keeper Weekly Log
-
+-------------------------
 ## Project info
 
 This is a task-keeping application with a weekly log feature. It is designed for university students on attachment, prioritizing function and form with an elegant and minimalist design inspired by Apple.
+
+## How the System Works
+
+### Daily Task Logging
+
+1. **Add Tasks**: Students can add their daily tasks through the `DailyTaskList` component.
+2. **View Tasks**: The tasks for each day are displayed in a list format.
+3. **Edit/Delete Tasks**: Students can edit or delete tasks as needed.
+
+### Weekly Log Compilation
+
+1. **Compile Weekly Log**: At the end of each week, students can compile their daily tasks into a weekly log using the `WeeklyLog` component.
+2. **View Weekly Logs**: Compiled weekly logs are displayed in a list format, sorted by date.
+3. **Add Past Weeks Logs**: Students can add logs for past weeks by selecting the desired date.
+
+### Exporting the Log Book
+
+1. **Generate Cover Page**: When exporting the log book, students will be prompted to fill in their details, including:
+   - Full Name
+   - Student ID
+   - Institution Name and Logo
+   - Company Name and Logo
+2. **Export as PDF**: The system will generate a PDF document that includes the cover page and all compiled weekly logs.
+
+-------------------------
+## What technologies are used for this project?
+
+This project is built with:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
 
 ## How can I edit this code?
 
@@ -44,41 +78,11 @@ npm run dev
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
 ## How can I deploy this project?
 
 To deploy this project, you can use platforms like Netlify or Vercel. Follow their documentation for deployment steps.
 
-## How the System Works
-
-### Daily Task Logging
-
-1. **Add Tasks**: Students can add their daily tasks through the `DailyTaskList` component.
-2. **View Tasks**: The tasks for each day are displayed in a list format.
-3. **Edit/Delete Tasks**: Students can edit or delete tasks as needed.
-
-### Weekly Log Compilation
-
-1. **Compile Weekly Log**: At the end of each week, students can compile their daily tasks into a weekly log using the `WeeklyLog` component.
-2. **View Weekly Logs**: Compiled weekly logs are displayed in a list format, sorted by date.
-
-### Exporting the Log Book
-
-1. **Generate Cover Page**: When exporting the log book, students will be prompted to fill in their details, including:
-   - Full Name
-   - Student ID
-   - Institution Name and Logo
-   - Company Name and Logo
-2. **Export as PDF**: The system will generate a PDF document that includes the cover page and all compiled weekly logs.
 
 ### Example Usage
 
@@ -111,4 +115,4 @@ If you would like to contribute to this project, please fork the repository and 
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
