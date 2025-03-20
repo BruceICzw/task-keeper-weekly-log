@@ -55,7 +55,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState<Date>(selectedDate);
   const [internshipStartDate, setInternshipStartDateState] = useState<Date | null>(getInternshipStartDate());
-  const [saturdayIsWorkDay, setSaturdayIsWorkDayState] = useState<boolean>(isSaturdayWorkDay());
+  const [saturdayWorkDay, setSaturdayIsWorkDayState] = useState<boolean>(isSaturdayWorkDay());
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const { toast } = useToast();
 
@@ -135,7 +135,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
       setInternshipStartDate(internshipStartDate);
     }
     
-    setSaturdayWorkDay(saturdayIsWorkDayState);
+    setSaturdayWorkDay(saturdayWorkDay);
     setShowSettings(false);
     
     // Reload the current week based on new settings
@@ -224,7 +224,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                   <Label htmlFor="saturday-work">Include Saturday as Work Day</Label>
                   <Switch
                     id="saturday-work"
-                    checked={saturdayIsWorkDayState}
+                    checked={saturdayWorkDay}
                     onCheckedChange={setSaturdayIsWorkDayState}
                   />
                 </div>
