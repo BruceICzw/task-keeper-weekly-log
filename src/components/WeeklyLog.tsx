@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   formatDate, 
@@ -40,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import TaskInput from "@/components/TaskInput";
 
 interface WeeklyLogProps {
   selectedDate?: Date;
@@ -139,7 +139,6 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
     setSaturdayWorkDay(saturdayWorkDay);
     setShowSettings(false);
     
-    // Reload the current week based on new settings
     loadWeekData();
     
     toast({
@@ -147,6 +146,10 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
       description: "Your logbook settings have been updated.",
       duration: 3000,
     });
+  };
+
+  const handleTaskAdded = () => {
+    loadWeekData();
   };
 
   const groupTasksByDay = () => {
@@ -355,6 +358,11 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
           </p>
         </div>
       )}
+      
+      <div className="mb-6">
+        <h3 className="text-lg font-medium mb-2">Add Task</h3>
+        <TaskInput date={date} onTaskAdded={handleTaskAdded} />
+      </div>
       
       {isLoading ? (
         <div className="text-center py-12 bg-muted/30 rounded-lg">
