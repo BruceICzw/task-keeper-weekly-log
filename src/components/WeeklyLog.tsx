@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   formatDate, 
@@ -21,7 +22,7 @@ import {
   WeeklyLog as WeeklyLogType 
 } from "@/utils/storageUtils";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon, Settings2Icon, InfoIcon } from "lucide-react";
+import { CalendarIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon, Settings2Icon, InfoIcon, PlusCircleIcon } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
@@ -32,14 +33,14 @@ import {
   DialogClose,
   DialogFooter
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import TaskInput from "@/components/TaskInput";
+import DailyTaskList from "@/components/DailyTaskList";
 
 interface WeeklyLogProps {
   selectedDate?: Date;
@@ -54,10 +55,12 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   const [isCompiling, setIsCompiling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState<Date>(selectedDate);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [internshipStartDate, setInternshipStartDateState] = useState<Date | null>(getInternshipStartDate());
-  const [saturdayWorkDay, setSaturdayIsWorkDayState] = useState<boolean>(isSaturdayWorkDay());
+  const [saturdayWorkDay, setSaturdayWorkDayState] = useState<boolean>(isSaturdayWorkDay());
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showHelp, setShowHelp] = useState<boolean>(false);
+  const [showDayDialog, setShowDayDialog] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -152,6 +155,11 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
     loadWeekData();
   };
 
+  const handleDayClick = (day: Date) => {
+    setSelectedDay(day);
+    setShowDayDialog(true);
+  };
+
   const groupTasksByDay = () => {
     const groupedTasks: Record<string, Task[]> = {};
     
@@ -221,7 +229,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                 <ul className="list-disc pl-5 space-y-2 text-sm">
                   <li>Click the <strong>left arrow button</strong> to go to the previous week</li>
                   <li>Use the <strong>calendar</strong> icon to pick any date and view its week</li>
-                  <li>Once you've selected a past week, you can add tasks normally</li>
+                  <li>Once you've selected a week, you can click on any day to add tasks</li>
                 </ul>
                 <div className="bg-muted p-3 rounded-md mt-2">
                   <p className="text-xs text-muted-foreground">
@@ -269,7 +277,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                   <Switch
                     id="saturday-work"
                     checked={saturdayWorkDay}
-                    onCheckedChange={setSaturdayIsWorkDayState}
+                    onCheckedChange={setSaturdayWorkDayState}
                   />
                 </div>
               </div>
@@ -354,27 +362,15 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
         <div className="mb-4 p-3 bg-muted/30 border border-muted rounded-md text-sm flex items-center gap-2">
           <InfoIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <p>
-            You are viewing a past week. You can still add or edit tasks for this week.
+            You are viewing a past week. Click on any day to add or edit tasks for this day.
           </p>
         </div>
       )}
-      
-      <div className="mb-6">
-        <h3 className="text-lg font-medium mb-2">Add Task</h3>
-        <TaskInput date={date} onTaskAdded={handleTaskAdded} />
-      </div>
       
       {isLoading ? (
         <div className="text-center py-12 bg-muted/30 rounded-lg">
           <RefreshCwIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
           <p className="text-muted-foreground">Loading week data...</p>
-        </div>
-      ) : tasks.length === 0 ? (
-        <div className="text-center py-12 bg-muted/30 rounded-lg">
-          <h3 className="text-xl font-light mb-2">No Tasks This Week</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            There are no tasks for this week yet. Add some tasks to your daily log to see them here.
-          </p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -472,14 +468,18 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
               const dayTasks = tasksByDay[dayStr] || [];
               
               return (
-                <Card key={dayStr} className={`overflow-hidden transition-all duration-300 hover:shadow-md ${dayTasks.length === 0 ? 'opacity-70' : ''}`}>
+                <Card 
+                  key={dayStr} 
+                  className={`overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer ${dayTasks.length === 0 ? 'opacity-70 hover:opacity-100' : ''}`}
+                  onClick={() => handleDayClick(day)}
+                >
                   <CardHeader className="pb-2 pt-3 px-4">
                     <CardTitle className="text-sm font-medium">
                       {formatDate(day, "EEEE")}
                     </CardTitle>
                     <p className="text-xs text-muted-foreground">{formatDate(day, "MMMM d")}</p>
                   </CardHeader>
-                  <CardContent className="px-4 pb-4 pt-0">
+                  <CardContent className="px-4 pb-2 pt-0">
                     {dayTasks.length === 0 ? (
                       <p className="text-xs text-muted-foreground italic">No tasks</p>
                     ) : (
@@ -501,12 +501,36 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                       </ul>
                     )}
                   </CardContent>
+                  <CardFooter className="pt-0 pb-3 px-4">
+                    <div className="w-full flex justify-center">
+                      <PlusCircleIcon className="h-4 w-4 text-muted-foreground transition-colors hover:text-primary" />
+                    </div>
+                  </CardFooter>
                 </Card>
               );
             })}
           </div>
         </div>
       )}
+
+      <Dialog open={showDayDialog} onOpenChange={setShowDayDialog}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDay ? formatDate(selectedDay, "EEEE, MMMM d") : "Add Tasks"}
+            </DialogTitle>
+            <DialogDescription>
+              Add or manage tasks for this day
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDay && (
+            <div className="mt-4">
+              <DailyTaskList date={selectedDay} onChange={handleTaskAdded} />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
