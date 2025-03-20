@@ -22,7 +22,7 @@ import {
   WeeklyLog as WeeklyLogType 
 } from "@/utils/storageUtils";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon, Settings2Icon } from "lucide-react";
+import { CalendarIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon, Settings2Icon, InfoIcon } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
@@ -57,6 +57,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   const [internshipStartDate, setInternshipStartDateState] = useState<Date | null>(getInternshipStartDate());
   const [saturdayWorkDay, setSaturdayIsWorkDayState] = useState<boolean>(isSaturdayWorkDay());
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showHelp, setShowHelp] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -176,6 +177,11 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   const tasksByDay = groupTasksByDay();
   const allSkills = getAllSkills(tasks);
 
+  const isInPastWeek = (): boolean => {
+    const today = new Date();
+    return weekData.endDate < today;
+  };
+
   return (
     <div className="w-full animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
@@ -185,10 +191,45 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
             <span>Week {weekData.weekNumber}, {weekData.year}</span>
             <span className="mx-2">•</span>
             <span>{formatWeekRange(weekData.startDate, weekData.endDate)}</span>
+            {isInPastWeek() && (
+              <Badge variant="outline" className="ml-2 bg-muted/40">Past Week</Badge>
+            )}
           </div>
         </div>
         
         <div className="flex items-center space-x-2">
+          <Dialog open={showHelp} onOpenChange={setShowHelp}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                <InfoIcon className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Weekly Log Navigation</DialogTitle>
+                <DialogDescription>
+                  How to work with different weeks
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <p className="text-sm">
+                  You can navigate to <strong>past weeks</strong> using the following methods:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 text-sm">
+                  <li>Click the <strong>left arrow button</strong> to go to the previous week</li>
+                  <li>Use the <strong>calendar</strong> icon to pick any date and view its week</li>
+                  <li>Once you've selected a past week, you can add tasks normally</li>
+                </ul>
+                <div className="bg-muted p-3 rounded-md mt-2">
+                  <p className="text-xs text-muted-foreground">
+                    <strong>Tip:</strong> To modify which days are considered work days, 
+                    use the Settings button to configure your preferences.
+                  </p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
           <Dialog open={showSettings} onOpenChange={setShowSettings}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="transition-all duration-300">
@@ -244,16 +285,22 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
               variant="ghost" 
               size="icon" 
               onClick={handlePreviousWeek}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors relative group"
             >
               <ChevronLeftIcon className="h-4 w-4" />
+              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-background border rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                Previous Week
+              </span>
             </Button>
             
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="transition-all duration-300 mx-1">
+                <Button variant="ghost" size="sm" className="transition-all duration-300 mx-1 relative group">
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   <span className="hidden sm:inline">Change Week</span>
+                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-background border rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    Select Any Week
+                  </span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="center">
@@ -270,9 +317,12 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
               variant="ghost" 
               size="icon" 
               onClick={handleNextWeek}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors relative group"
             >
               <ChevronRightIcon className="h-4 w-4" />
+              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-background border rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                Next Week
+              </span>
             </Button>
           </div>
           
@@ -296,6 +346,15 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
           </Button>
         </div>
       </div>
+      
+      {isInPastWeek() && (
+        <div className="mb-4 p-3 bg-muted/30 border border-muted rounded-md text-sm flex items-center gap-2">
+          <InfoIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <p>
+            You are viewing a past week. You can still add or edit tasks for this week.
+          </p>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="text-center py-12 bg-muted/30 rounded-lg">
