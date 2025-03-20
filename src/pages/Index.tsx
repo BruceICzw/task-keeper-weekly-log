@@ -1,9 +1,7 @@
 
 import { useState, useEffect } from "react";
 import Header from "@/components/Header";
-import TaskInput from "@/components/TaskInput";
 import DailyTaskList from "@/components/DailyTaskList";
-import { Card, CardContent } from "@/components/ui/card";
 import { formatDate, isTodayFriday, getCurrentWeek } from "@/utils/dateUtils";
 import { createWeeklyLog, getWeeklyLog, getTasksForWeek } from "@/utils/storageUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -70,12 +68,6 @@ const Index = () => {
           </p>
         </div>
 
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-light mb-4">Add a New Task</h2>
-            <TaskInput date={currentDate} onTaskAdded={handleTaskAdded} />
-          </CardContent>
-        </Card>
 
         <div className="mb-4">
           <h2 className="text-xl font-light mb-4">Today's Tasks</h2>
