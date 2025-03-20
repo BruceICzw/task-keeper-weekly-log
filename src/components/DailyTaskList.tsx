@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { formatDate, isWeekday } from "@/utils/dateUtils";
 import { getTasksForDay, Task, deleteTask, addSkillsToTask, removeSkillFromTask } from "@/utils/storageUtils";
@@ -135,6 +134,8 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
         <h3 className="text-xl font-light mb-2">Weekend Day</h3>
         <p className="text-muted-foreground max-w-md">
           This is a weekend day. Tasks are not tracked on weekends.
+          <br />
+          <small className="block mt-2">Note: You can enable Saturday as a work day in settings.</small>
         </p>
       </div>
     );

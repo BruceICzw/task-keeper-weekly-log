@@ -49,6 +49,12 @@ const Header = () => {
                   {link.name}
                 </Link>
               ))}
+              <div className="py-2">
+                <ThemeToggle />
+              </div>
+              <div className="py-2">
+                <ContactDeveloper />
+              </div>
               <Button
                 variant="ghost"
                 className="flex items-center justify-start gap-2 px-2 text-lg font-medium text-muted-foreground transition-colors hover:text-primary"

@@ -6,6 +6,12 @@ import {
   getWeekDaysOnly, 
   formatWeekRange, 
   getWeekIdentifier,
+  getPreviousWeek,
+  getNextWeek,
+  setInternshipStartDate,
+  getInternshipStartDate,
+  setSaturdayWorkDay,
+  isSaturdayWorkDay,
   WeekData
 } from "@/utils/dateUtils";
 import { 
@@ -16,7 +22,7 @@ import {
   WeeklyLog as WeeklyLogType 
 } from "@/utils/storageUtils";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, RefreshCwIcon } from "lucide-react";
+import { CalendarIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon, Settings2Icon } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
@@ -24,12 +30,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface WeeklyLogProps {
   selectedDate?: Date;
@@ -44,6 +54,9 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   const [isCompiling, setIsCompiling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState<Date>(selectedDate);
+  const [internshipStartDate, setInternshipStartDateState] = useState<Date | null>(getInternshipStartDate());
+  const [saturdayIsWorkDay, setSaturdayIsWorkDayState] = useState<boolean>(isSaturdayWorkDay());
+  const [showSettings, setShowSettings] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -107,6 +120,34 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
     }
   };
 
+  const handlePreviousWeek = () => {
+    const previousWeek = getPreviousWeek(weekData);
+    setDate(previousWeek.startDate);
+  };
+
+  const handleNextWeek = () => {
+    const nextWeek = getNextWeek(weekData);
+    setDate(nextWeek.startDate);
+  };
+
+  const handleSaveSettings = () => {
+    if (internshipStartDate) {
+      setInternshipStartDate(internshipStartDate);
+    }
+    
+    setSaturdayWorkDay(saturdayIsWorkDayState);
+    setShowSettings(false);
+    
+    // Reload the current week based on new settings
+    loadWeekData();
+    
+    toast({
+      title: "Settings saved",
+      description: "Your logbook settings have been updated.",
+      duration: 3000,
+    });
+  };
+
   const groupTasksByDay = () => {
     const groupedTasks: Record<string, Task[]> = {};
     
@@ -137,10 +178,10 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
 
   return (
     <div className="w-full animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
         <div>
           <h2 className="text-2xl font-light mb-1">Weekly Summary</h2>
-          <div className="text-sm text-muted-foreground flex items-center">
+          <div className="text-sm text-muted-foreground flex items-center flex-wrap">
             <span>Week {weekData.weekNumber}, {weekData.year}</span>
             <span className="mx-2">•</span>
             <span>{formatWeekRange(weekData.startDate, weekData.endDate)}</span>
@@ -148,37 +189,108 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
         </div>
         
         <div className="flex items-center space-x-2">
-          <Popover>
-            <PopoverTrigger asChild>
+          <Dialog open={showSettings} onOpenChange={setShowSettings}>
+            <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="transition-all duration-300">
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                <span>Change Week</span>
+                <Settings2Icon className="h-4 w-4 mr-2" />
+                <span>Settings</span>
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
-                className="p-3 pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Logbook Settings</DialogTitle>
+                <DialogDescription>
+                  Configure your logbook preferences and internship details.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-6 py-4">
+                <div className="space-y-2">
+                  <Label>Internship Start Date</Label>
+                  <div className="border rounded-md p-1">
+                    <Calendar
+                      mode="single"
+                      selected={internshipStartDate || undefined}
+                      onSelect={(newDate) => newDate && setInternshipStartDateState(newDate)}
+                      className="w-full"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    This date will be used to calculate week numbers for your logbook.
+                  </p>
+                </div>
+                
+                <div className="flex items-center justify-between space-x-2">
+                  <Label htmlFor="saturday-work">Include Saturday as Work Day</Label>
+                  <Switch
+                    id="saturday-work"
+                    checked={saturdayIsWorkDayState}
+                    onCheckedChange={setSaturdayIsWorkDayState}
+                  />
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleSaveSettings}>Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          <div className="flex items-center bg-muted/30 rounded-md p-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handlePreviousWeek}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronLeftIcon className="h-4 w-4" />
+            </Button>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="transition-all duration-300 mx-1">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Change Week</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={(newDate) => newDate && setDate(newDate)}
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleNextWeek}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ChevronRightIcon className="h-4 w-4" />
+            </Button>
+          </div>
           
           <Button 
             onClick={compileWeeklyLog} 
             disabled={isCompiling || tasks.length === 0 || isLoading}
             className="transition-all duration-300 hover:scale-105"
+            size="sm"
           >
             {isCompiling ? (
               <>
                 <RefreshCwIcon className="h-4 w-4 mr-2 animate-spin" />
-                Compiling...
+                <span className="hidden sm:inline">Compiling...</span>
               </>
             ) : (
               <>
                 <RefreshCwIcon className="h-4 w-4 mr-2" />
-                Compile Now
+                <span className="hidden sm:inline">Compile</span>
               </>
             )}
           </Button>
@@ -287,7 +399,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
             </Card>
           )}
           
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {weekDays.map((day) => {
               const dayStr = formatDate(day, "yyyy-MM-dd");
               const dayTasks = tasksByDay[dayStr] || [];
