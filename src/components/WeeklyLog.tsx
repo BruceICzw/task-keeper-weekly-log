@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   formatDate, 
@@ -61,6 +60,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showHelp, setShowHelp] = useState<boolean>(false);
   const [showDayDialog, setShowDayDialog] = useState<boolean>(false);
+  const [dailyTaskListKey, setDailyTaskListKey] = useState<number>(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -157,6 +157,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
 
   const handleDayClick = (day: Date) => {
     setSelectedDay(day);
+    setDailyTaskListKey(prevKey => prevKey + 1);
     setShowDayDialog(true);
   };
 
@@ -526,7 +527,11 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
           
           {selectedDay && (
             <div className="mt-4">
-              <DailyTaskList date={selectedDay} onChange={handleTaskAdded} />
+              <DailyTaskList 
+                key={dailyTaskListKey} 
+                date={selectedDay} 
+                onChange={handleTaskAdded} 
+              />
             </div>
           )}
         </DialogContent>
