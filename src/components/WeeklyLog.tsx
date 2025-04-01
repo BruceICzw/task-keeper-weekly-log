@@ -16,7 +16,8 @@ import {
 import { 
   getTasksForWeek, 
   createWeeklyLog, 
-  getWeeklyLog, 
+  getWeeklyLog,
+  getTasksForDay,
   Task, 
   WeeklyLog as WeeklyLogType 
 } from "@/utils/storageUtils";
@@ -61,6 +62,8 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   const [showHelp, setShowHelp] = useState<boolean>(false);
   const [showDayDialog, setShowDayDialog] = useState<boolean>(false);
   const [dailyTaskListKey, setDailyTaskListKey] = useState<number>(0);
+  const [dayTasks, setDayTasks] = useState<Task[]>([]);
+  const [isDayTasksLoading, setIsDayTasksLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,6 +94,24 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadDayTasks = async (day: Date) => {
+    setIsDayTasksLoading(true);
+    try {
+      const loadedTasks = await getTasksForDay(day);
+      setDayTasks(loadedTasks);
+    } catch (error) {
+      console.error('Error loading day tasks:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load tasks for this day.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsDayTasksLoading(false);
     }
   };
 
@@ -153,11 +174,15 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
 
   const handleTaskAdded = () => {
     loadWeekData();
+    if (selectedDay) {
+      loadDayTasks(selectedDay); 
+    }
   };
 
   const handleDayClick = (day: Date) => {
     setSelectedDay(day);
     setDailyTaskListKey(prevKey => prevKey + 1);
+    loadDayTasks(day);
     setShowDayDialog(true);
   };
 
@@ -527,11 +552,17 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
           
           {selectedDay && (
             <div className="mt-4">
-              <DailyTaskList 
-                key={dailyTaskListKey} 
-                date={selectedDay} 
-                onChange={handleTaskAdded} 
-              />
+              {isDayTasksLoading ? (
+                <div className="flex justify-center p-4">
+                  <RefreshCwIcon className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <DailyTaskList 
+                  key={dailyTaskListKey} 
+                  date={selectedDay} 
+                  onChange={handleTaskAdded} 
+                />
+              )}
             </div>
           )}
         </DialogContent>
