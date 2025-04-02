@@ -1,4 +1,3 @@
-
 import { getDayIdentifier, getWeekIdentifier, getWeekStringIdentifier, WeekData } from './dateUtils';
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
@@ -110,7 +109,14 @@ export const getAllTasks = async (): Promise<Task[]> => {
 export const getTasksForDay = async (date: Date): Promise<Task[]> => {
   const allTasks = await getAllTasks();
   const dayId = getDayIdentifier(date);
-  return allTasks.filter(task => task.date.startsWith(dayId));
+  
+  // Log for debugging
+  console.log('Getting tasks for day ID:', dayId);
+  
+  return allTasks.filter(task => {
+    const taskDay = task.date.split('T')[0]; // Extract just the date part
+    return taskDay === dayId;
+  });
 };
 
 // Get tasks for the current week
@@ -133,13 +139,24 @@ export const getTasksForWeek = async (weekData: WeekData): Promise<Task[]> => {
 export const addTask = async (content: string, date: Date): Promise<Task> => {
   const { data: session } = await supabase.auth.getSession();
   
+  // Ensure we're using the corrected date format by using getDayIdentifier
+  // and then append the time part to create a full ISO string
+  const dayId = getDayIdentifier(date);
+  const timeString = new Date().toISOString().substring(11);
+  const fullDateString = `${dayId}T${timeString}`;
+  
   const newTask: Task = {
     id: uuidv4(),
     content,
-    date: date.toISOString(),
+    date: fullDateString,
     createdAt: new Date().toISOString(),
     skills: []
   };
+  
+  // Log for debugging
+  console.log('Adding task for date:', date);
+  console.log('Formatted date ID:', dayId);
+  console.log('Full date string:', fullDateString);
   
   if (!session.session) {
     // Fallback to localStorage if no authenticated user

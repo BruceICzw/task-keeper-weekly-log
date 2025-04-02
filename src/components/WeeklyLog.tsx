@@ -180,9 +180,13 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
   };
 
   const handleDayClick = (day: Date) => {
-    setSelectedDay(day);
+    const selectedDate = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+    
+    console.log('Selected day:', selectedDate, 'Formatted ID:', getDayIdentifier(selectedDate));
+    
+    setSelectedDay(selectedDate);
     setDailyTaskListKey(prevKey => prevKey + 1);
-    loadDayTasks(day);
+    loadDayTasks(selectedDate);
     setShowDayDialog(true);
   };
 

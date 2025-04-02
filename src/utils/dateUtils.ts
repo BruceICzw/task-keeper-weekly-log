@@ -112,6 +112,8 @@ export const getWeekStringIdentifier = (weekData: WeekData): string => {
 };
 
 export const getDayIdentifier = (date: Date): string => {
+  // Fix: Make sure we get consistent formatting of the date
+  // by using the date-fns format with zero-padding for month and day
   return format(date, "yyyy-MM-dd");
 };
 
