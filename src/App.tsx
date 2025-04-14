@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import Auth from "./pages/Auth";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Landing from "./pages/Landing";
 import { ThemeProvider } from "./components/ThemeProvider";
+import MadeWithLove from "./components/MadeWithLove";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AppRoutes />
+            <MadeWithLove />
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>
