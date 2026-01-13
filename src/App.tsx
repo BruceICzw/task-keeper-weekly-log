@@ -13,6 +13,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Landing from "./pages/Landing";
 import { ThemeProvider } from "./components/ThemeProvider";
 import MadeWithLove from "./components/MadeWithLove";
+import DomainMigrationModal from "./components/DomainMigrationModal";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Sonner />
+          <DomainMigrationModal />
           <BrowserRouter>
             <AppRoutes />
             <MadeWithLove />
