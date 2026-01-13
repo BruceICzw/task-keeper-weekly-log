@@ -28,15 +28,6 @@ export function ContactDeveloper() {
         <div className="grid gap-4 py-4">
           <p>You can contact the developer at:</p>
           <a href="mailto:chigwabruce@gmail.com" className="font-medium">chigwabruce@gmail.com</a>
-          <p>Or visit the GitHub repository for issues and feature requests:</p>
-          <a
-            href="https://github.com/BruceICzw/uni-log-book-creator"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary underline"
-          >
-            GitHub Repository
-          </a>
         </div>
       </DialogContent>
     </Dialog>
