@@ -2,7 +2,8 @@
 
 **Date:** 2026-06-16  
 **Scope:** Full app — Landing, Auth, Dashboard, Weekly view, Log Book view  
-**Approach:** CSS variable token update first, then page-by-page JSX restructuring
+**Approach:** CSS variable token update first, then page-by-page JSX restructuring  
+**Icon rule:** Use `lucide-react` icons exclusively throughout — no emoji characters anywhere in the UI
 
 ---
 
@@ -78,7 +79,7 @@ Also add a `sidebar` CSS custom property group:
 Full rewrite. Sections in order:
 
 ### 3a. Navbar
-- Logo: indigo square icon + "UniLog" wordmark
+- Logo: `<BookOpen />` lucide icon in an indigo rounded square + "UniLog" wordmark
 - Nav links: Home, Features, How It Works (desktop only)
 - Right CTA: "Get Started Free" pill button (indigo filled)
 - Sticky, white background, 1px bottom border
@@ -101,7 +102,7 @@ Full rewrite. Sections in order:
 - Title: "Everything You Need to Ace Your Logbook"
 - 2-column grid of 3 feature cards (third card spans full width)
 - Cards: Daily Task Logging, Auto Weekly Compilation, One-Click PDF Export
-- Each card: icon in indigo-tint box, h3, description, feature badge pill
+- Each card: lucide icon (`<ClipboardList />`, `<CalendarCheck />`, `<FileText />`) in an `#EEF2FF` rounded box, h3, description, feature badge pill
 
 ### 3e. Stats Section
 - Indigo gradient background
@@ -163,15 +164,15 @@ Each authenticated page (`Index.tsx`, `WeeklyLogView.tsx`, `LogBookView.tsx`) re
 
 ### Sidebar (`src/components/Header.tsx` → renamed to `Sidebar.tsx`)
 - Fixed left, 64px wide, `#1E1B4B` background, `position: fixed`, `top-0 left-0 h-screen z-50`
-- Top: square indigo logo icon (📘)
-- Nav icons (vertically stacked, 40×40 rounded-10):
-  - Home icon → `/`
-  - Calendar icon → `/weekly`
-  - BookOpen icon → `/logbook`
-- Bottom section: ThemeToggle icon + avatar circle (first letter of username, indigo background) + sign-out icon
-- Active item: `#4F46E5` background, white icon
+- Top: square indigo logo — `BookOpen` lucide icon inside an indigo rounded square
+- Nav icons (vertically stacked, 40×40 rounded-10) — all from `lucide-react`:
+  - `<Home />` → `/`
+  - `<Calendar />` → `/weekly`
+  - `<BookOpen />` → `/logbook`
+- Bottom section: `<Moon />` / `<Sun />` theme toggle + avatar circle (user initial) + `<LogOut />` sign-out
+- Active item: `#4F46E5` background, white icon; inactive: `rgba(255,255,255,0.45)`
 - Tooltip on hover (absolute positioned label) showing page name
-- Keep existing `useAuth` / `signOut` / `useLocation` logic; remove Sheet/mobile-drawer (sidebar is always visible; mobile collapses to icon-only which it already is at 64px)
+- Keep existing `useAuth` / `signOut` / `useLocation` logic; remove Sheet/mobile-drawer (sidebar is always visible at 64px)
 
 ### TopBar (accept props per page)
 - White background, 1px bottom border, `h-14`
@@ -183,10 +184,10 @@ Each authenticated page (`Index.tsx`, `WeeklyLogView.tsx`, `LogBookView.tsx`) re
 ## 6. Dashboard (`src/pages/Index.tsx`)
 
 ### Stat Cards Row (3 cards)
-- **Tasks Today**: count from `getTasksForDay(currentDate)` — already called in `DailyTaskList`, hoist the count to `Index.tsx`
-- **Current Week**: week number + date range from `getCurrentWeek()` → `weekData.weekNumber` + `formatWeekRange(...)`
-- **Logs Compiled**: count of all weekly logs from Supabase `weekly_logs` table — add a `getWeeklyLogsCount()` helper to `storageUtils.ts`
-- Each card: label + large number + sub-label + icon in `#EEF2FF` box
+- **Tasks Today**: count from `getTasksForDay(currentDate)` — already called in `DailyTaskList`, hoist the count to `Index.tsx`. Icon: `<ClipboardList />`
+- **Current Week**: week number + date range from `getCurrentWeek()` → `weekData.weekNumber` + `formatWeekRange(...)`. Icon: `<Calendar />`
+- **Logs Compiled**: count of all weekly logs from Supabase `weekly_logs` table — add a `getWeeklyLogsCount()` helper to `storageUtils.ts`. Icon: `<FileText />`
+- Each card: label + large number + sub-label + lucide icon in `#EEF2FF` rounded box
 
 ### Task Input
 - Full-width white card with 2px border (indigo on focus)
@@ -196,9 +197,9 @@ Each authenticated page (`Index.tsx`, `WeeklyLogView.tsx`, `LogBookView.tsx`) re
 ### Task List
 - Section header: "Today's Tasks" + task count badge
 - Each task card (white, rounded-12, subtle shadow):
-  - Indigo dot + task text + timestamp
+  - Small indigo dot + task text + timestamp
   - Skill badges in indigo-tint pills
-  - Action buttons (✨ skills, 🗑️ delete) visible on hover
+  - Action buttons visible on hover: `<Sparkles />` (add skills) + `<Trash2 />` (delete) — from `lucide-react`
 
 ---
 
@@ -206,7 +207,7 @@ Each authenticated page (`Index.tsx`, `WeeklyLogView.tsx`, `LogBookView.tsx`) re
 
 The `WeeklyLog` component has significant existing logic (week navigation, day-click to add tasks, compile button, settings dialog, compiled log preview). This is a **restyle only** — no logic changes.
 
-- `WeeklyLogView.tsx`: replace `<Header />` + `<main>` with `<AppLayout title="Weekly Summary" subtitle="View and compile your weekly task summaries" actions={<CompileButton />} />`
+- `WeeklyLogView.tsx`: replace `<Header />` + `<main>` with `<AppLayout title="Weekly Summary" subtitle="View and compile your weekly task summaries" actions={<CompileButton />} />`. Compile button uses `<RefreshCw />` lucide icon; Export button uses `<FileDown />`
 - `WeeklyLog.tsx` restyling:
   - **Week navigation bar** (prev/next/calendar/compile): restyle buttons to indigo theme; keep all existing click handlers
   - **Skills card**: restyle with `#EEF2FF` background, indigo badge pills
@@ -219,7 +220,7 @@ The `WeeklyLog` component has significant existing logic (week navigation, day-c
 
 ## 8. Log Book View (`src/pages/LogBookView.tsx`)
 
-- Top bar: "Log Book" + "📄 Export Full PDF" button
+- Top bar: "Log Book" + Export Full PDF button with `<FileDown />` lucide icon
 - Tab strip: Cover Page | All Entries
 - **Cover Page tab**: 2-column grid of cover page fields (student name, ID, company, period) + summary banner (weeks compiled, tasks logged, export status)
 - **All Entries tab**: scrollable list of all weekly entries (existing `LogBook` component restyled)
