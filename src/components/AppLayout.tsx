@@ -12,7 +12,7 @@ const AppLayout = ({ children, title, subtitle, actions }: AppLayoutProps) => {
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <div className="ml-16 flex flex-1 flex-col">
+      <div className="ml-52 flex flex-1 flex-col">
         {/* Top bar */}
         <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-card px-6">
           <div>
