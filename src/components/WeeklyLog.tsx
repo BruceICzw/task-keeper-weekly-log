@@ -23,7 +23,7 @@ import {
   WeeklyLog as WeeklyLogType 
 } from "@/utils/storageUtils";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, RefreshCwIcon, ChevronLeftIcon, ChevronRightIcon, Settings2Icon, InfoIcon, PlusCircleIcon } from "lucide-react";
+import { CalendarDays, RefreshCw, ChevronLeft, ChevronRight, Settings2, Info, PlusCircle } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
@@ -36,9 +36,8 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import DailyTaskList from "@/components/DailyTaskList";
@@ -226,25 +225,25 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
 
   return (
     <div className="w-full animate-fade-in">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-2xl font-light mb-1">Weekly Summary</h2>
-          <div className="text-sm text-muted-foreground flex items-center flex-wrap">
-            <span>Week {weekData.weekNumber}, {weekData.year}</span>
-            <span className="mx-2">•</span>
+          <h2 className="text-lg font-bold text-foreground">
+            Week {weekData.weekNumber}, {weekData.year}
+          </h2>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
             <span>{formatWeekRange(weekData.startDate, weekData.endDate)}</span>
             {isInPastWeek() && (
-              <Badge variant="outline" className="ml-2 bg-muted/40">Past Week</Badge>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs">Past Week</span>
             )}
           </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
+
+        <div className="flex items-center gap-2">
           <Dialog open={showHelp} onOpenChange={setShowHelp}>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                <InfoIcon className="h-4 w-4" />
-              </Button>
+              <button className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-primary">
+                <Info className="h-4 w-4" />
+              </button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -264,19 +263,19 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                 </ul>
                 <div className="bg-muted p-3 rounded-md mt-2">
                   <p className="text-xs text-muted-foreground">
-                    <strong>Tip:</strong> To modify which days are considered work days, 
+                    <strong>Tip:</strong> To modify which days are considered work days,
                     use the Settings button to configure your preferences.
                   </p>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
-          
+
           <Dialog open={showSettings} onOpenChange={setShowSettings}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="transition-all duration-300">
-                <Settings2Icon className="h-4 w-4 mr-2" />
-                <span>Settings</span>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Settings2 className="h-4 w-4" />
+                Settings
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
@@ -286,12 +285,12 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                   Configure your logbook preferences and internship details.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-6 py-4">
                 <div className="space-y-2">
                   <Label>Internship Start Date</Label>
                   <div className="border rounded-md p-1">
-                    <Calendar
+                    <CalendarPicker
                       mode="single"
                       selected={internshipStartDate || undefined}
                       onSelect={(newDate) => newDate && setInternshipStartDateState(newDate)}
@@ -302,7 +301,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                     This date will be used to calculate week numbers for your logbook.
                   </p>
                 </div>
-                
+
                 <div className="flex items-center justify-between space-x-2">
                   <Label htmlFor="saturday-work">Include Saturday as Work Day</Label>
                   <Switch
@@ -312,7 +311,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                   />
                 </div>
               </div>
-              
+
               <DialogFooter>
                 <DialogClose asChild>
                   <Button variant="outline">Cancel</Button>
@@ -321,77 +320,53 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          
-          <div className="flex items-center bg-muted/30 rounded-md p-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+
+          <div className="flex items-center rounded-xl border border-border bg-card">
+            <button
               onClick={handlePreviousWeek}
-              className="text-muted-foreground hover:text-foreground transition-colors relative group"
+              className="flex h-8 w-8 items-center justify-center rounded-l-xl text-muted-foreground hover:bg-accent hover:text-primary"
             >
-              <ChevronLeftIcon className="h-4 w-4" />
-              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-background border rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                Previous Week
-              </span>
-            </Button>
-            
+              <ChevronLeft className="h-4 w-4" />
+            </button>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="transition-all duration-300 mx-1 relative group">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
+                <button className="flex items-center gap-1.5 px-3 text-xs font-medium text-muted-foreground hover:text-primary">
+                  <CalendarDays className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">Change Week</span>
-                  <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-background border rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    Select Any Week
-                  </span>
-                </Button>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="center">
-                <Calendar
+                <CalendarPicker
                   mode="single"
                   selected={date}
-                  onSelect={(newDate) => newDate && setDate(newDate)}
+                  onSelect={(d) => d && setDate(d)}
                   className="p-3 pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
-            
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <button
               onClick={handleNextWeek}
-              className="text-muted-foreground hover:text-foreground transition-colors relative group"
+              className="flex h-8 w-8 items-center justify-center rounded-r-xl text-muted-foreground hover:bg-accent hover:text-primary"
             >
-              <ChevronRightIcon className="h-4 w-4" />
-              <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-background border rounded px-2 py-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                Next Week
-              </span>
-            </Button>
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
-          
-          <Button 
-            onClick={compileWeeklyLog} 
+
+          <Button
+            onClick={compileWeeklyLog}
             disabled={isCompiling || tasks.length === 0 || isLoading}
-            className="transition-all duration-300 hover:scale-105"
             size="sm"
+            className="gap-1.5"
           >
-            {isCompiling ? (
-              <>
-                <RefreshCwIcon className="h-4 w-4 mr-2 animate-spin" />
-                <span className="hidden sm:inline">Compiling...</span>
-              </>
-            ) : (
-              <>
-                <RefreshCwIcon className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Compile</span>
-              </>
-            )}
+            <RefreshCw className={`h-4 w-4 ${isCompiling ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">{isCompiling ? "Compiling..." : "Compile"}</span>
           </Button>
         </div>
       </div>
       
       {isInPastWeek() && (
         <div className="mb-4 p-3 bg-muted/30 border border-muted rounded-md text-sm flex items-center gap-2">
-          <InfoIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <Info className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <p>
             You are viewing a past week. Click on any day to add or edit tasks for this day.
           </p>
@@ -400,22 +375,20 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
       
       {isLoading ? (
         <div className="text-center py-12 bg-muted/30 rounded-lg">
-          <RefreshCwIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+          <RefreshCw className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
           <p className="text-muted-foreground">Loading week data...</p>
         </div>
       ) : (
         <div className="space-y-6">
           {allSkills.length > 0 && (
-            <Card className="bg-muted/20 border border-muted">
+            <Card className="border border-border bg-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg font-medium">Skills This Week</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {allSkills.map(skill => (
-                    <Badge key={skill} variant="secondary" className="px-3 py-1">
-                      {skill}
-                    </Badge>
+                    <span key={skill} className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-primary">{skill}</span>
                   ))}
                 </div>
               </CardContent>
@@ -469,9 +442,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                                     {task.skills && task.skills.length > 0 && (
                                       <div className="mt-1 flex flex-wrap gap-1">
                                         {task.skills.map(skill => (
-                                          <Badge key={skill} variant="outline" className="text-xs">
-                                            {skill}
-                                          </Badge>
+                                          <span key={skill} className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-primary">{skill}</span>
                                         ))}
                                       </div>
                                     )}
@@ -501,7 +472,9 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
               return (
                 <Card 
                   key={dayStr} 
-                  className={`overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer ${dayTasks.length === 0 ? 'opacity-70 hover:opacity-100' : ''}`}
+                  className={`cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md hover:border-primary/30 ${
+                  dayTasks.length === 0 ? "opacity-60 hover:opacity-100" : ""
+                }`}
                   onClick={() => handleDayClick(day)}
                 >
                   <CardHeader className="pb-2 pt-3 px-4">
@@ -516,14 +489,13 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                     ) : (
                       <ul className="space-y-2 text-sm">
                         {dayTasks.map((task) => (
-                          <li key={task.id} className="task-item">
-                            <div>{task.content}</div>
+                          <li key={task.id} className="flex items-start gap-2 py-1 text-xs text-foreground">
+                            <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                            <span>{task.content}</span>
                             {task.skills && task.skills.length > 0 && (
                               <div className="mt-1 flex flex-wrap gap-1">
                                 {task.skills.map(skill => (
-                                  <Badge key={skill} variant="secondary" className="text-xs">
-                                    {skill}
-                                  </Badge>
+                                  <span key={skill} className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-primary">{skill}</span>
                                 ))}
                               </div>
                             )}
@@ -534,7 +506,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
                   </CardContent>
                   <CardFooter className="pt-0 pb-3 px-4">
                     <div className="w-full flex justify-center">
-                      <PlusCircleIcon className="h-4 w-4 text-muted-foreground transition-colors hover:text-primary" />
+                      <PlusCircle className="h-4 w-4 text-muted-foreground transition-colors hover:text-primary" />
                     </div>
                   </CardFooter>
                 </Card>
@@ -559,7 +531,7 @@ const WeeklyLog = ({ selectedDate = new Date(), onCompile }: WeeklyLogProps) => 
             <div className="mt-4">
               {isDayTasksLoading ? (
                 <div className="flex justify-center p-4">
-                  <RefreshCwIcon className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : (
                 <DailyTaskList 
