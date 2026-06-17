@@ -1,23 +1,57 @@
-
-import Header from "@/components/Header";
+import { useState } from "react";
+import AppLayout from "@/components/AppLayout";
 import LogBook from "@/components/LogBook";
+import { Button } from "@/components/ui/button";
+import { FileDown } from "lucide-react";
+import CoverPageForm from "@/components/CoverPageForm";
+
+type Tab = "cover" | "entries";
 
 const LogBookView = () => {
+  const [activeTab, setActiveTab] = useState<Tab>("cover");
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "cover", label: "Cover Page" },
+    { id: "entries", label: "All Entries" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <AppLayout
+      title="Log Book"
+      subtitle="Your complete industrial attachment logbook"
+      actions={
+        <Button size="sm" className="gap-1.5">
+          <FileDown className="h-4 w-4" />
+          Export Full PDF
+        </Button>
+      }
+    >
+      {/* Tab strip */}
+      <div className="-mx-6 -mt-6 mb-6 flex border-b border-border bg-card px-6">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            className={`-mb-px border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
+              activeTab === t.id
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
-      <main className="max-w-6xl mx-auto px-4 pt-28 pb-20 animate-fade-in">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-light tracking-tight mb-2">Logbook</h1>
-          <p className="text-muted-foreground">
-            Your weekly task records with skills applied and learned
-          </p>
-        </div>
-
+      {activeTab === "cover" ? (
+        <CoverPageForm
+          onSubmit={() => {}}
+          onCancel={() => setActiveTab("entries")}
+        />
+      ) : (
         <LogBook />
-      </main>
-    </div>
+      )}
+    </AppLayout>
   );
 };
 
