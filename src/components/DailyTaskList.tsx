@@ -4,12 +4,10 @@ import { formatDate, isWeekday } from "@/utils/dateUtils";
 import { getTasksForDay, Task, deleteTask, addSkillsToTask, removeSkillFromTask } from "@/utils/storageUtils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangleIcon, TrashIcon, PlusCircleIcon, XIcon, WandSparklesIcon, RefreshCwIcon } from "lucide-react";
+import { AlertTriangle, Trash2, PlusCircle, X, Sparkles, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import TaskInput from "@/components/TaskInput";
 
 interface DailyTaskListProps {
@@ -54,13 +52,13 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
 
   const handleDeleteTask = async (taskId: string) => {
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       await deleteTask(taskId);
       await loadTasks();
       if (onChange) onChange();
-      
+
       toast({
         title: "Task deleted",
         description: "The task has been removed.",
@@ -81,15 +79,15 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
 
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedTaskId || !skillInput.trim() || isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       await addSkillsToTask(selectedTaskId, [skillInput.trim()]);
       setSkillInput("");
       await loadTasks();
-      
+
       toast({
         title: "Skill added",
         description: `"${skillInput.trim()}" has been added to the task.`,
@@ -110,12 +108,12 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
 
   const handleRemoveSkill = async (taskId: string, skill: string) => {
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       await removeSkillFromTask(taskId, skill);
       await loadTasks();
-      
+
       toast({
         title: "Skill removed",
         description: `"${skill}" has been removed from the task.`,
@@ -136,13 +134,13 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
 
   if (!isWeekday(date)) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center animate-fade-in">
-        <AlertTriangleIcon className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
-        <h3 className="text-xl font-light mb-2">Weekend Day</h3>
-        <p className="text-muted-foreground max-w-md">
-          This is a weekend day. Tasks are not tracked on weekends.
+      <div className="flex flex-col items-center justify-center py-12 text-center animate-fade-in">
+        <AlertTriangle className="mb-4 h-10 w-10 text-muted-foreground/40" />
+        <h3 className="mb-2 text-lg font-semibold text-foreground">Weekend Day</h3>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Tasks are not tracked on weekends.
           <br />
-          <small className="block mt-2">Note: You can enable Saturday as a work day in settings.</small>
+          <small className="mt-1 block">Enable Saturday as a work day in Weekly settings.</small>
         </p>
       </div>
     );
@@ -153,30 +151,28 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
       <div className="mb-6">
         <TaskInput date={date} onTaskAdded={handleTaskAdded} />
       </div>
-      
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">
+
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-bold text-foreground">
           {formatDate(date, "EEEE, MMMM d")}
         </h3>
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={loadTasks} 
+        <div className="flex items-center gap-2">
+          <button
+            onClick={loadTasks}
             disabled={loading || isProcessing}
-            className="flex items-center space-x-1"
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
-            <RefreshCwIcon className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-            <span className="text-xs">Refresh</span>
-          </Button>
-          <div className="text-sm text-muted-foreground">
+            <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+          <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-primary">
             {tasks.length} {tasks.length === 1 ? "task" : "tasks"}
-          </div>
+          </span>
         </div>
       </div>
-      
+
       <Separator className="mb-4" />
-      
+
       {loading ? (
         <div className="py-8 text-center">
           <p className="text-muted-foreground">Loading tasks...</p>
@@ -188,114 +184,109 @@ const DailyTaskList = ({ date, onChange }: DailyTaskListProps) => {
       ) : (
         <div className="space-y-3">
           {tasks.map((task) => (
-            <Card key={task.id} className="overflow-hidden task-item">
-              <CardContent className="p-0">
-                <div className="flex flex-col p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p>{task.content}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDate(new Date(task.createdAt), "h:mm a")}
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:text-primary"
-                            onClick={() => setSelectedTaskId(task.id)}
-                            disabled={isProcessing}
-                          >
-                            <WandSparklesIcon className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>Add Skills</DialogTitle>
-                            <DialogDescription>
-                              Add skills you applied or learned while performing this task.
-                            </DialogDescription>
-                          </DialogHeader>
-                          
-                          <form onSubmit={handleAddSkill} className="flex items-center space-x-2 mt-4">
-                            <Input
-                              placeholder="Enter a skill (e.g., React, Time Management)"
-                              value={skillInput}
-                              onChange={(e) => setSkillInput(e.target.value)}
-                              className="flex-1"
-                              disabled={isProcessing}
-                            />
-                            <Button type="submit" disabled={!skillInput.trim() || isProcessing}>
-                              {isProcessing ? "Adding..." : "Add"}
-                            </Button>
-                          </form>
-                          
-                          <div className="mt-4">
-                            <h4 className="text-sm font-medium mb-2">Task Skills:</h4>
-                            {task.skills && task.skills.length > 0 ? (
-                              <div className="flex flex-wrap gap-2">
-                                {task.skills.map((skill) => (
-                                  <Badge key={skill} variant="outline" className="flex items-center gap-1 px-3 py-1">
-                                    {skill}
-                                    <button 
-                                      type="button"
-                                      onClick={() => handleRemoveSkill(task.id, skill)}
-                                      className="text-muted-foreground hover:text-destructive ml-1"
-                                      disabled={isProcessing}
-                                    >
-                                      <XIcon className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">No skills added yet.</p>
-                            )}
-                          </div>
-                          
-                          <DialogClose asChild>
-                            <Button type="button" variant="outline" className="mt-4">
-                              Close
-                            </Button>
-                          </DialogClose>
-                        </DialogContent>
-                      </Dialog>
-                      
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDeleteTask(task.id)}
-                        disabled={isProcessing}
-                      >
-                        {isProcessing ? (
-                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : (
-                          <TrashIcon className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  
+            <div
+              key={task.id}
+              className="group flex items-start justify-between rounded-2xl border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md hover:translate-x-0.5"
+            >
+              <div className="flex flex-1 gap-3">
+                <span className="mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-primary" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">{task.content}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {formatDate(new Date(task.createdAt), "h:mm a")}
+                  </p>
                   {task.skills && task.skills.length > 0 && (
-                    <div className="mt-2">
-                      <div className="flex flex-wrap gap-1">
-                        {task.skills.map((skill) => (
-                          <Badge key={skill} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {task.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-primary"
+                        >
+                          {skill}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              {/* Action buttons — visible on hover */}
+              <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-primary"
+                      onClick={() => setSelectedTaskId(task.id)}
+                      disabled={isProcessing}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Add Skills</DialogTitle>
+                      <DialogDescription>
+                        Add skills you applied or learned while performing this task.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleAddSkill} className="mt-4 flex items-center gap-2">
+                      <Input
+                        placeholder="Enter a skill (e.g., React, Time Management)"
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        className="flex-1"
+                        disabled={isProcessing}
+                      />
+                      <Button type="submit" disabled={!skillInput.trim() || isProcessing}>
+                        {isProcessing ? "Adding..." : "Add"}
+                      </Button>
+                    </form>
+                    <div className="mt-4">
+                      <h4 className="mb-2 text-sm font-medium">Task Skills:</h4>
+                      {task.skills && task.skills.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {task.skills.map((skill) => (
+                            <span
+                              key={skill}
+                              className="flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-primary"
+                            >
+                              {skill}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSkill(task.id, skill)}
+                                className="ml-1 text-muted-foreground hover:text-destructive"
+                                disabled={isProcessing}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No skills added yet.</p>
+                      )}
+                    </div>
+                    <DialogClose asChild>
+                      <Button type="button" variant="outline" className="mt-4">
+                        Close
+                      </Button>
+                    </DialogClose>
+                  </DialogContent>
+                </Dialog>
+
+                <button
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-red-50 hover:text-destructive"
+                  onClick={() => handleDeleteTask(task.id)}
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}
