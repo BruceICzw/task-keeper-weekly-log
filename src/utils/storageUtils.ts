@@ -533,12 +533,24 @@ export const clearAllData = async (): Promise<void> => {
   localStorage.removeItem('task-keeper-tasks');
   localStorage.removeItem('task-keeper-weekly-logs');
   localStorage.removeItem('task-keeper-cover-page');
-  
+
   const { data: session } = await supabase.auth.getSession();
-  
+
   if (session.session) {
     // Clear Supabase data for the current user
     await supabase.from('tasks').delete().neq('id', '0'); // Delete all tasks
     await supabase.from('weekly_logs').delete().neq('id', '0'); // Delete all logs
   }
+};
+
+export const getWeeklyLogsCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from('weekly_logs')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) {
+    console.error('Error fetching weekly logs count:', error);
+    return 0;
+  }
+  return count ?? 0;
 };
